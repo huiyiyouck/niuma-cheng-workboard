@@ -56,7 +56,6 @@ docs/knowledge/
 - Developer（开发工程师）写 `engineering/`
 - Tester（测试工程师）写 `testing/`
 - DevOps（运维/部署工程师）写 `devops/`
-- WM（工作流管理者）写角色/流程相关的知识，通常进入 `decisions/` 或 `retrospectives/`
 
 ## 什么时候写入知识库
 

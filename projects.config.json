@@ -6,7 +6,7 @@
     {
       "id": "workflow",
       "name": "团队工作流",
-      "path": "../claude-workflow",
+      "path": "../agent-workflow",
       "kind": "workflow-source",
       "enabled": true
     },

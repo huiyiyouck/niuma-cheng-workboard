@@ -31,7 +31,7 @@
 ### 多 Agent 协作标记
 `[角色] 动作 — 详情`（用于 Agent 之间传递协作信号）
 
-**角色标识**：PM、Architect、Developer、Tester、DevOps、UI、WM
+**角色标识**：PM、Architect、Developer、Tester、DevOps、UI
 
 **动作关键词**：待Review、Reviewed、已定稿、会话记录、基线修正
 
@@ -41,7 +41,6 @@
 [Architect] Reviewed v0.2 PRD R1     ← Review 完成，注明轮次
 [PM] v0.2 PRD R2 待Review           ← 修改后重新提交，新轮次
 [PM] v0.2 PRD 已定稿                 ← 阶段定稿
-[WM] 基线修正 — 删除门禁              ← 基线修正
 ```
 
 ## 禁止事项
@@ -62,7 +61,7 @@
 
 ### 受保护路径名单
 
-每个项目首次启用本框架时，应由 Architect 在 ADR 中明确本项目的受保护路径名单。默认写入 `docs/baseline/architecture.md`；如果项目已有 ADR 目录，沿用项目约定路径，并在 `docs/knowledge/INDEX.md` 中登记。建议至少覆盖以下三类：
+每个项目首次启用本框架时，应由 Architect 在 ADR 中明确本项目的受保护路径名单。默认写入 `docs/knowledge/decisions/` 下的 ADR（`baseline/` 是工作流框架层，不放项目 ADR）；如果项目已有 ADR 目录，沿用项目约定路径，并在 `docs/knowledge/INDEX.md` 中登记。建议至少覆盖以下三类：
 
 | 类别 | 示例路径 |
 |------|----------|

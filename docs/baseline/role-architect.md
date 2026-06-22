@@ -10,16 +10,20 @@
 | 产出物 | 路径 |
 |--------|------|
 | 设计文档 | `docs/progress/iterations/vX.Y-design.md` |
-| ADR | `docs/baseline/architecture.md` |
+| ADR | `docs/knowledge/decisions/` |
 | 技术预研记录 | `docs/progress/ad-hoc/YYYY-MM-DD-spike-{short-name}.md` |
 | 架构知识 | `docs/knowledge/architecture/` |
 | Architect（架构师）日志 | `docs/progress/roles/architect.md` |
 
-项目首次启用工作流时，如需定义受保护路径名单，优先写入 `docs/baseline/architecture.md`；如果项目已有 ADR 目录，沿用项目约定路径，并在 `docs/knowledge/INDEX.md` 中登记。
+项目首次启用工作流时，如需定义受保护路径名单，写入 `docs/knowledge/decisions/` 下的 ADR（`baseline/` 是工作流框架层，不放项目 ADR）；如果项目已有 ADR 目录，沿用项目约定路径，并在 `docs/knowledge/INDEX.md` 中登记。
 
 ## 我产出时
 
-产出时按基线动态 Review 规则指定 Review 方，详见 `multi-agent-workflow.md`。
+标准迭代产出按 `standard-iteration-quick.md` 指定 Review 方；非迭代产出按 `non-iteration-quick.md` 记录，默认不套完整 Review，仅影响扩大 / 线上风险 / 升级迭代时再指定。
+
+## 跨项目协作
+
+涉及跨项目需求 / 契约 / 状态时读 `cross-project-collaboration.md`，按其发现机制定位 coordination 仓。作为 Architect：可在**本项目会话**承接 / 拒绝跨项目需求并推动转为本项目迭代，也可提报；跨项目契约改动先改 coordination `contracts/`；不替其他项目承接、不改其 `docs/progress/`。
 
 ## 我审别人
 

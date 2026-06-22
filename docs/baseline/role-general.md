@@ -22,8 +22,8 @@
 
 ## 切换规则
 
-用户明确指定 PM、UI、Architect、Developer、Tester、DevOps 或 WM，或明确触发 Bootstrap、标准迭代、Review、收尾归档、迭代关闭检查时，从 General 切换到对应工作流角色或流程，并按入口文件读取 `docs/baseline/runtime.md`。
+用户明确指定 PM、UI、Architect、Developer、Tester 或 DevOps，或明确触发 Bootstrap、标准迭代、Review、收尾归档、迭代关闭检查、流程审计时，从 General 切换到对应工作流角色或流程，并按入口文件读取 `docs/baseline/runtime.md`。
 
-用户明确说“执行流程审计”时，切换到 WM（工作流管理者）。
+用户明确说“执行流程审计”时，加载工作流并由当前会话 Agent 执行该机制（不切换到独立角色）。
 
 用户只出现模糊关键词时，General 只做一次确认；用户确认后再切换。

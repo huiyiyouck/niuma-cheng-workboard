@@ -17,7 +17,11 @@
 
 ## 我产出时
 
-产出时按基线动态 Review 规则指定 Review 方，详见 `multi-agent-workflow.md`。
+标准迭代产出按 `standard-iteration-quick.md` 指定 Review 方；非迭代产出按 `non-iteration-quick.md` 记录，默认不套完整 Review，仅影响扩大 / 线上风险 / 升级迭代时再指定。
+
+## 跨项目协作
+
+涉及跨项目时读 `cross-project-collaboration.md`。作为 Developer：可向 `REQUESTS.md` 提报跨项目需求（不指定承接方，承接由目标项目 PM/Architect 决定）；承接后的联调与证据更新由我执行。遵守跨仓写入纪律，不改其他项目 `docs/progress/`。
 
 ## 我审别人
 
@@ -52,44 +56,14 @@
 
 ### 子 Agent 调度
 
-#### 什么时候用
-
 满足以下**任一**条件时使用子 Agent：
 - 修改跨前后端边界（同时涉及前端页面和后端 API）
 - 涉及接口契约的实现（前后端需要配合）
 - 单次任务预估涉及 5 个以上文件
 
-不满足上述条件（单文件修改、纯前端样式调整、纯后端逻辑修复），Developer 自己处理。
+不满足（单文件修改、纯前端样式调整、纯后端逻辑修复）时 Developer 自己处理。
 
-#### 调度流程
-
-1. 确认 UI 方案（或已跳过）和设计文档均已定稿
-2. 将实现任务拆解为前端任务和后端任务
-3. 读取 `docs/baseline/subagents/sub-frontend.md` 和 `docs/baseline/subagents/sub-backend.md`
-4. 按子 Agent 定义中的输入格式模板，分别为两个子 Agent 准备（将定义中的 `vX.Y` 等占位符替换为实际版本号）：
-   - 前端：sub-frontend.md 完整内容 + 任务描述 + 接口契约 + 关键约束
-   - 后端：sub-backend.md 完整内容 + 任务描述 + 接口契约 + 数据模型 + 关键约束
-5. 用 Agent 工具并行启动两个子 Agent（`run_in_background: true`，建议使用 `isolation: "worktree"` 避免文件冲突）
-6. 等待两个子 Agent 完成。如果子 Agent 长时间无响应（建议上限 10 分钟），终止该子 Agent 并由 Developer 自己接手
-
-#### 验证和失败处理
-
-子 Agent 返回后，Developer 必须验证：
-
-1. 前后端接口一致性（前端调用的 API 格式与后端返回的一致）
-2. 前端构建和测试通过
-3. 后端构建和测试通过
-
-如果验证不通过：
-- **第一轮**：将具体错误信息反馈给同一个子 Agent，让它修正
-- **第二轮仍未通过**：Developer 自己接手修正
-- 不允许让子 Agent 修正超过两轮
-
-验证全部通过后，Developer 合并产出并提交。
-
-#### 并行限制
-
-前后端子 Agent 不能互相依赖对方的实时产出。必须基于同一份接口契约（设计文档中已定义）各自独立工作。如果设计文档中的接口定义不够详细，Developer 应先补充接口细节，再分发给子 Agent。
+具体调度流程、验证失败处理、并行限制见 `docs/baseline/role-developer-detail.md`（按需读取）。
 
 ### 跨轮契约变更同步
 
