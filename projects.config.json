@@ -1,0 +1,45 @@
+{
+  "refresh": {
+    "interval_seconds": 60
+  },
+  "projects": [
+    {
+      "id": "workflow",
+      "name": "团队工作流",
+      "path": "../claude-workflow",
+      "kind": "workflow-source",
+      "enabled": true
+    },
+    {
+      "id": "xiaobao",
+      "name": "牛马程小报",
+      "path": "../niuma-cheng-xiaobao",
+      "kind": "business",
+      "enabled": true
+    },
+    {
+      "id": "ai",
+      "name": "AI 处理中枢",
+      "path": "../niuma-cheng-ai",
+      "kind": "business",
+      "enabled": true
+    },
+    {
+      "id": "coordination",
+      "name": "跨项目协调仓库",
+      "path": "../niuma-cheng-coordination",
+      "kind": "coordination",
+      "enabled": true
+    },
+    {
+      "id": "workboard",
+      "name": "跨项目 Agent 工作看板",
+      "path": ".",
+      "kind": "workboard",
+      "enabled": true
+    }
+  ],
+  "coordination": {
+    "project_id": "coordination"
+  }
+}
