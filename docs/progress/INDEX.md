@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.1
 - 当前模式：标准迭代
-- 当前阶段：实现阶段 — R1 代码完成、验证通过（`npm test` 45/45 + 前端 `vite build` + Playwright 四视图端到端真实数据渲染），待 commit + 测试阶段
+- 当前阶段：实现阶段 — R1 已 commit（b5b18d9）、验证通过（`npm test` 45/45 + 前端 `vite build` + Playwright 四视图端到端真实数据渲染），进测试阶段
 - 阻塞项：无
-- 下一步入口：Owner 确认 commit 实现 R1 成果 → 切到 Tester 角色进入测试阶段验收（standard-iteration 核心产出 ≥2 Review 方，待 Owner 确认 Review 安排）
+- 下一步入口：Owner 切到 Tester 角色进入测试阶段验收（Review 方：Tester 为主 + Developer 自检已完成）
 
 ## 版本列表
 
@@ -51,7 +51,7 @@
 
 | 优先级 | 待办 | 归属角色 | 来源 | 状态 |
 |--------|------|----------|------|------|
-| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 实现 R1 完成、验证通过，待 commit + 测试验收 |
+| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 实现 R1 已 commit（b5b18d9）、验证通过，待 Tester 测试验收 |
 
 ## Bootstrap 记录
 - 时间：2026-06-17

@@ -8,8 +8,9 @@
 - 关联迭代：v0.1
 - 关联非迭代工作：无
 - 关联 Change Note：无
-- 遗留问题/风险：`head_commit` 待 Owner 确认 commit 后回填；实现阶段核心产出需 ≥2 Review 方，Review 安排（建议测试阶段 Tester 验收，必要时 Architect）待 Owner 确认；`npm install` 报 2 个 high 漏洞（recharts 链路），后续评估；三个 drawer-skeleton 函数因取消假 loading 成为暂未调用的死代码，待清理。
-- 下一步入口：Owner 确认 commit 实现 R1 成果 → 切到 Tester 角色进入测试阶段验收。
+- 提交：实现 R1 已 commit `b5b18d9`（base `2016cee`）；经 Owner 确认 Review 方为 Tester 为主 + Developer 自检（已完成）。
+- 遗留问题/风险：`npm install` 报 2 个 high 漏洞（recharts 链路），后续评估；三个 drawer-skeleton 函数因取消假 loading 成为暂未调用的死代码，待清理。
+- 下一步入口：Owner 切到 Tester 角色进入测试阶段验收。
 - 收尾状态：未收尾
 
 ## 2026-06-23 — 设计 R1 Review
