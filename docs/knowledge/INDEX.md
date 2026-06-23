@@ -8,6 +8,8 @@
 
 ## Architecture（架构）
 
+- [Web Agent Console 统一角色工作台架构规划](architecture/web-agent-console-roadmap.md)：长期方向，把项目/角色 CLI Agent 会话统一到 workboard Web 中管理；不纳入 v0.1 只读看板范围。
+
 ## Engineering（工程）
 
 ## Testing（测试）
@@ -19,4 +21,3 @@
 ## Opportunities（机会池）
 
 ## Retrospectives（复盘）
-

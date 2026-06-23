@@ -1,5 +1,17 @@
 # Architect 角色日志
 
+## 2026-06-23 — 会话摘要（Web Agent Console 架构规划）
+- 本次角色：Architect（架构师）
+- 动作：产出
+- 涉及文档：`docs/knowledge/architecture/web-agent-console-roadmap.md`、`docs/knowledge/INDEX.md`
+- 结论：记录 Owner 后续构想：workboard 长期演进为统一角色工作台 / Web Agent Console，在 Web 中选择项目和角色，底层由 workboard 后端启动或复用 Codex / Claude Code 等 CLI Agent，会话输出和权限确认在网页完成。该规划不纳入 v0.1，只作为后续架构方向。
+- 关联迭代：无
+- 关联非迭代工作：Web Agent Console 架构规划
+- 关联 Change Note：无
+- 遗留问题/风险：后续需单独预研 CLI adapter、会话持久化、repo 锁、权限确认、SSE/WebSocket 和访问控制。
+- 下一步入口：v0.1 继续按当前实现阶段推进；Web Agent Console 待 Owner 后续单独启动预研或 v0.2 PRD。
+- 收尾状态：未收尾
+
 ## 2026-06-23 — 会话摘要（Owner 确认设计选项）
 - 本次角色：Architect（架构师）
 - 动作：修改
