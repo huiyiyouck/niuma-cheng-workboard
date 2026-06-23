@@ -116,7 +116,8 @@ function firstRunPage() {
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const port = Number(process.env.PORT) || 5174;
-  createServer().listen(port, () => {
-    console.log(`项目管理工作台已启动: http://localhost:${port}`);
+  const host = process.env.HOST || "0.0.0.0";
+  createServer().listen(port, host, () => {
+    console.log(`项目管理工作台已启动: http://${host}:${port}`);
   });
 }
