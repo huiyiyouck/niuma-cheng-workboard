@@ -4,11 +4,11 @@
 
 ## 当前项目状态
 
-- 当前迭代：无
-- 当前模式：非迭代立项 / 开发前准备
-- 当前阶段：立项定位已定稿，团队工作流已接入，等待 Developer 实现第一版只读看板
+- 当前迭代：v0.1
+- 当前模式：标准迭代
+- 当前阶段：实现阶段 — R1 代码完成、验证通过（`npm test` 45/45 + 前端 `vite build` + Playwright 四视图端到端真实数据渲染），待 commit + 测试阶段
 - 阻塞项：无
-- 下一步入口：Owner 切换到 `niuma-cheng-workboard` 目录后，以 Developer（开发工程师）角色基于 [ad-hoc/2026-06-17-workboard-positioning.md](ad-hoc/2026-06-17-workboard-positioning.md) 开发 MVP：本地 Node 服务、配置读取、接入诊断视图、项目总览和跨项目状态读取
+- 下一步入口：Owner 确认 commit 实现 R1 成果 → 切到 Tester 角色进入测试阶段验收（standard-iteration 核心产出 ≥2 Review 方，待 Owner 确认 Review 安排）
 
 ## 版本列表
 
@@ -16,6 +16,7 @@
 
 | 版本 | 迭代记录 | PRD | UI | 设计文档 | Summary | 状态 |
 |------|----------|-----|----|----------|---------|------|
+| v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | — | 进行中（实现 R1 完成、验证通过，待 commit + 测试阶段） |
 
 ## 当前 Change Notes
 
@@ -32,7 +33,7 @@
 
 | 日期 | 角色 | 工作 | 结论 | 下一步入口 |
 |------|------|------|------|------------|
-| 2026-06-17 | General | 新项目立项准备 | 已将定稿定位文档移动到本项目 `docs/progress/ad-hoc/`，并从 `claude-workflow` 复制团队工作流入口、baseline、templates、knowledge/progress 骨架 | Owner 切到本目录，以 Developer 角色开工 |
+| 2026-06-17 | General | 新项目立项准备 | 已将定稿定位文档移动到本项目 `docs/progress/ad-hoc/`，并从 `agent-workflow` 复制团队工作流入口、baseline、templates、knowledge/progress 骨架 | Owner 切到本目录，以 Developer 角色开工 |
 
 ## 跨任务待办
 
@@ -50,7 +51,7 @@
 
 | 优先级 | 待办 | 归属角色 | 来源 | 状态 |
 |--------|------|----------|------|------|
-| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 待启动 |
+| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 实现 R1 完成、验证通过，待 commit + 测试验收 |
 
 ## Bootstrap 记录
 - 时间：2026-06-17

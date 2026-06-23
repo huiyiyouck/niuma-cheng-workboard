@@ -15,7 +15,8 @@
       "name": "牛马程小报",
       "path": "../niuma-cheng-xiaobao",
       "kind": "business",
-      "enabled": true
+      "enabled": true,
+      "url": "https://news.huiyiyou.cloud"
     },
     {
       "id": "ai",

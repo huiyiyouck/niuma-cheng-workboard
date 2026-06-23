@@ -7,7 +7,7 @@
 ## 当前状态
 
 - 立项定位：已定稿，见 `docs/progress/ad-hoc/2026-06-17-workboard-positioning.md`
-- 团队工作流：已从 `claude-workflow` 复制 baseline / templates / 入口文件
+- 团队工作流：已从 `agent-workflow` 复制 baseline / templates / 入口文件
 - 实现状态：待 Developer 开发第一版 MVP
 
 ## 第一版边界

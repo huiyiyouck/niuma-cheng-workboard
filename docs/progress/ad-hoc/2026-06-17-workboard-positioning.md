@@ -10,12 +10,12 @@
 
 | 项目 | 当前定位 |
 |------|----------|
-| `claude-workflow` | 团队工作流源头项目，维护 PM / UI / Architect / Developer / Tester / DevOps / WM 等角色规则、模板和基线机制 |
+| `agent-workflow` | 团队工作流源头项目，维护 PM / UI / Architect / Developer / Tester / DevOps / WM 等角色规则、模板和基线机制 |
 | `niuma-cheng-xiaobao` | 新闻聚合平台业务项目，已接入团队工作流 |
 | `niuma-cheng-ai` | AI 处理中枢 / Agent Hub，后续也会接入团队工作流 |
 | `niuma-cheng-coordination` | 跨项目协调仓库，保存跨项目需求池、状态、契约、决策和项目间沟通 |
 
-后续每个业务项目都会逐步引入 `claude-workflow` 团队工作流。工作流本身若有问题，先在 `claude-workflow` 项目中讨论、修正、更新，再同步到各业务项目。
+后续每个业务项目都会逐步引入 `agent-workflow` 团队工作流。工作流本身若有问题，先在 `agent-workflow` 项目中讨论、修正、更新，再同步到各业务项目。
 
 现有问题是：各项目都有自己的进度索引、角色日志、待办和阻塞项，但 Owner 缺少一个统一入口查看整体监督、节奏、阻塞和跨项目协作状态。
 
@@ -66,15 +66,15 @@ workboard
 
 看板不维护一套全局独立 Agent 角色，也不替代各项目内部的角色日志。
 
-### 3.2 `claude-workflow` 是工作流源头
+### 3.2 `agent-workflow` 是工作流源头
 
-`claude-workflow` 负责维护团队工作流的规则、角色手册、模板和基线机制。
+`agent-workflow` 负责维护团队工作流的规则、角色手册、模板和基线机制。
 
 看板只读取各项目已经同步后的工作流状态，不直接定义或修改工作流规则。
 
 工作流规则如需调整：
 
-1. 先在 `claude-workflow` 项目中讨论、Review、修改。
+1. 先在 `agent-workflow` 项目中讨论、Review、修改。
 2. 定稿后同步到各业务项目。
 3. 看板读取各项目同步后的实际状态。
 
@@ -98,7 +98,7 @@ workboard
 
 `niuma-cheng-workboard` 本身也是一个普通项目。
 
-它后续也需要接入 `claude-workflow`，拥有自己的：
+它后续也需要接入 `agent-workflow`，拥有自己的：
 
 - `docs/progress/INDEX.md`
 - `docs/progress/iterations/`
@@ -198,7 +198,7 @@ workboard
 - 不做数据库
 - 不替代 Git / GitHub
 - 不替代 `niuma-cheng-coordination`
-- 不自动修改 `claude-workflow` 或业务项目基线
+- 不自动修改 `agent-workflow` 或业务项目基线
 - 不做复杂甘特图、资源排期或 Jira 化项目管理
 - 第一版不在页面上保存配置变更；接入配置先由 Owner 修改配置文件，看板页面只做监控和校验展示
 
@@ -248,7 +248,7 @@ niuma-cheng-workboard
     {
       "id": "workflow",
       "name": "团队工作流",
-      "path": "../claude-workflow",
+      "path": "../agent-workflow",
       "kind": "workflow-source"
     },
     {
@@ -300,7 +300,7 @@ niuma-cheng-workboard
 | kind | 含义 | 第一版展示策略 |
 |------|------|----------------|
 | `business` | 业务项目，例如新闻平台、AI 中枢 | 读取 `docs/progress/INDEX.md`、角色日志、迭代、待办；展示项目总览和项目内角色看板 |
-| `workflow-source` | 团队工作流源头项目，例如 `claude-workflow` | 优先展示工作流基线状态、模板和最近变更；如果自身也有 `docs/progress/INDEX.md`，可按普通项目补充展示，但不强制要求具备完整业务角色看板 |
+| `workflow-source` | 团队工作流源头项目，例如 `agent-workflow` | 优先展示工作流基线状态、模板和最近变更；如果自身也有 `docs/progress/INDEX.md`，可按普通项目补充展示，但不强制要求具备完整业务角色看板 |
 | `coordination` | 跨项目协调仓库 | 读取 `PROJECTS.md`、`REQUESTS.md`、`STATUS.md`、`contracts/`、`communications/`、`decisions/`；总览中展示协调仓库摘要，不要求具备 `docs/progress/INDEX.md`，不作为普通业务项目展示角色看板 |
 | `workboard` | 看板项目自身 | Bootstrap 前展示「未接入团队工作流」；Bootstrap 后按普通项目读取自身进度与角色状态 |
 
@@ -397,7 +397,7 @@ niuma-cheng-workboard
 后续新增项目按以下流程接入：
 
 1. 在项目本身完成基本仓库初始化。
-2. 如该项目需要团队工作流，按 `claude-workflow` 规则执行 Bootstrap。
+2. 如该项目需要团队工作流，按 `agent-workflow` 规则执行 Bootstrap。
 3. 在 `niuma-cheng-workboard/projects.config.json` 中新增项目配置。
 4. 打开看板的接入诊断视图。
 5. 确认路径解析结果正确。
@@ -527,7 +527,7 @@ niuma-cheng-coordination/communications/*.md
 - 因 `REQUESTS.md` 当前 `承接方` 是自由文本（例如 `ai（承接人待 Bootstrap 后补登 PM/Architect）`），看板不能使用 `承接方 === id` 的简单等值匹配，应按 token / 词边界识别项目 `id`，避免 `ai` 这类短 id 被普通单词误命中。
 - 未匹配配置项目 `id` 的跨项目需求归入「其他需求」折叠区。
 - 后续可扩展为同时匹配提出方、沟通文档参与项目和需求正文中的项目标识。
-- 长期推荐在 `coordination` 侧增加结构化 `承接方 id` 字段，或约定 `承接方` 单元格以纯项目 `id` 开头、自由说明进入备注，以减少看板解析歧义。该数据规则应先在 `claude-workflow` / `niuma-cheng-coordination` 中定稿，再由看板读取。
+- 长期推荐在 `coordination` 侧增加结构化 `承接方 id` 字段，或约定 `承接方` 单元格以纯项目 `id` 开头、自由说明进入备注，以减少看板解析歧义。该数据规则应先在 `agent-workflow` / `niuma-cheng-coordination` 中定稿，再由看板读取。
 
 ## 8. 后续结构化建议
 
@@ -551,7 +551,7 @@ updated_at: 2026-06-17
 
 第一版解析策略：如果存在 frontmatter，优先读取 frontmatter；如果不存在，则回退解析现有 Markdown 标题、列表和表格。这样在结构化块尚未同步到各项目之前，看板仍能读取当前工作流文档。
 
-该改造应先在 `claude-workflow` 中定规则，再同步到各项目。
+该改造应先在 `agent-workflow` 中定规则，再同步到各项目。
 
 ## 9. 立项判断
 
@@ -560,7 +560,7 @@ updated_at: 2026-06-17
 理由：
 
 1. 它是跨项目监督工具，不属于任何单一业务项目。
-2. 它不应该污染 `claude-workflow` 这个工作流源头项目。
+2. 它不应该污染 `agent-workflow` 这个工作流源头项目。
 3. 它不应该放进 `xiaobao` 或 `ai`，否则会把业务项目和管理工具耦合。
 4. 它天然需要读取多个项目和协调仓库。
 5. 它自身后续也会接入团队工作流，成为被监控项目之一。
@@ -591,7 +591,7 @@ niuma-cheng-workboard
 | 2 | 第一版是否确认只读，不做页面编辑和回写？ | ✅ 已确认 |
 | 3 | 是否确认看板项目自身也纳入监控？ | ✅ 已确认 |
 | 4 | 是否确认 Agent 角色看板按项目分组，而不是做全局角色池？ | ✅ 已确认 |
-| 5 | 是否确认 `claude-workflow` 继续作为工作流源头，所有工作流规则调整先在该项目定稿？ | ✅ 已确认 |
+| 5 | 是否确认 `agent-workflow` 继续作为工作流源头，所有工作流规则调整先在该项目定稿？ | ✅ 已确认 |
 | 6 | 第一版是否接受本地轻量 Node 服务，不先引入数据库和登录系统？ | ✅ 已确认 |
 | 7 | 是否接受项目路径支持相对路径、绝对路径和 `PROJECT_HOME` 环境变量？ | ✅ 已确认 |
 | 8 | 是否接受单项目读取失败时降级显示「读取异常」，不阻断整体看板？ | ✅ 已确认 |
@@ -614,7 +614,7 @@ Owner 已确认以下内容：
 - 第一版严格只读，不提供任何编辑功能，不对任何被监控项目的文件做回写操作。
 - `niuma-cheng-workboard` 自身列入项目配置，在看板视图中与其他项目并列展示；初始阶段展示为「看板自身未接入团队工作流」，后续接入工作流后按普通项目规则读取自身进度和角色状态。
 - 角色看板严格按项目分组展示，归属关系为「项目 → 角色 → 状态 / 日志 / 下一步」，不做全局角色池。
-- `claude-workflow` 是工作流规则的唯一源头。规则调整流程为：`claude-workflow` 内讨论定稿 → 同步到各业务项目 → 看板读取各项目同步后的实际状态。
+- `agent-workflow` 是工作流规则的唯一源头。规则调整流程为：`agent-workflow` 内讨论定稿 → 同步到各业务项目 → 看板读取各项目同步后的实际状态。
 - 第一版采用本地 Node.js 服务 + 静态前端，不引入数据库，不实现登录权限系统，保持轻量。
 - 项目路径支持相对路径、绝对路径和 `${PROJECT_HOME}` 环境变量展开；推荐本机默认使用相对路径，`${PROJECT_HOME}` 作为可选增强。
 - 单个项目读取失败时，该项目卡片降级显示「读取异常」及错误摘要，不影响其他项目正常渲染；第一版不强制要求快照机制。
