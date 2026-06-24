@@ -23,3 +23,15 @@
 - 遗留问题/风险：承接方 token 识别、角色日志解析兼容、config 需补 `url` 字段（均实现阶段处理）。
 - 下一步入口：Owner 切 Architect / Developer Review `v0.1-prd.md`；通过后进设计 / 实现阶段（前端复用 `frontend/`，新建本地 Node 后端）。
 - 收尾状态：未收尾
+
+## 2026-06-24 — 会话摘要（v0.1 迭代关闭检查 + 归档）
+- 本次角色：PM（执行迭代关闭检查机制）
+- 动作：迭代关闭 + 收尾归档
+- 涉及文档：`docs/progress/iterations/v0.1-summary.md`（新建）、`v0.1.md`（关闭归档段 + 概览）、`INDEX.md`（当前状态 / 版本列表 / 收尾摘要 / 待办提醒）
+- 结论：核实 v0.1 六阶段门禁全部定稿、各阶段 Review 有结论、生产 `workboard.huiyiyou.cloud` 经 Owner 实测通过、无阻塞 → 判 **可关闭（已完成）**。生成归档摘要，更新迭代记录与 INDEX；各阶段角色日志已在各自阶段更新，关闭检查未代写他人日志。
+- 关联迭代：v0.1（已关闭）
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：① 测试产物未入库（`v0.1-test-plan.md`/`v0.1-test-report.md` 未跟踪、`tester.md` 未提交、生产部署 commit 待提交）→ 待 Owner 确认提交；② 根 `CLAUDE.md` 索引旧定位待 Owner 根目录订正；③ 设计系统提升全局待推进；④ config `url` / 深色切换 / 待办可写留 v0.2+。
+- 下一步入口：Owner 决定下一步（提交遗留产物 / 启动 v0.2 管理能力演进）。
+- 收尾状态：已收尾

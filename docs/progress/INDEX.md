@@ -4,11 +4,11 @@
 
 ## 当前项目状态
 
-- 当前迭代：v0.1
-- 当前模式：标准迭代
-- 当前阶段：v0.1 生产环境已按确认域名 `workboard.huiyiyou.cloud` 重新部署；前端与后端均已迁入独立生产目录，开发仓库修改不会自动影响生产
+- 当前迭代：无（v0.1 已关闭）
+- 当前模式：未选择
+- 当前阶段：v0.1 已关闭并上线（生产 `workboard.huiyiyou.cloud` 实测通过 / 测试环境 `115.191.43.79:8088`）；等待 Owner 决定下一步
 - 阻塞项：无
-- 下一步入口：Owner 配置 / 确认 `workboard.huiyiyou.cloud` DNS 指向本机后实测；通过后执行 v0.1 迭代关闭检查
+- 下一步入口：Owner 决定下一步——提交 v0.1 遗留测试产物 / 启动 v0.2（管理能力演进）/ 其他；遗留与后续机会见 [v0.1-summary.md](iterations/v0.1-summary.md)
 
 ## 版本列表
 
@@ -16,7 +16,7 @@
 
 | 版本 | 迭代记录 | PRD | UI | 设计文档 | Summary | 状态 |
 |------|----------|-----|----|----------|---------|------|
-| v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | — | 进行中（生产已按域名和独立目录部署，待 DNS / Owner 实测与迭代关闭检查） |
+| v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，遗留测试产物待提交） |
 
 ## 当前 Change Notes
 
@@ -33,6 +33,7 @@
 
 | 日期 | 角色 | 工作 | 结论 | 下一步入口 |
 |------|------|------|------|------------|
+| 2026-06-24 | PM | v0.1 迭代关闭检查 + 归档 | ✅ 可关闭（已完成）— 6 阶段定稿、生产实测通过；已生成 [v0.1-summary.md](iterations/v0.1-summary.md)、更新迭代记录与 INDEX | Owner 决定下一步（提交遗留产物 / 启动 v0.2） |
 | 2026-06-24 | DevOps | v0.1 生产部署与开发/生产隔离整改 | 已撤回错误的 8089/IP 入口和开发目录软链；生产按 `workboard.huiyiyou.cloud` 443 部署，前端 `/var/www/workboard.huiyiyou.cloud` 与后端 `/opt/workboard-prod/app` 均为独立生产目录；本机 SNI 自检 200 | Owner 配置 / 确认 `workboard.huiyiyou.cloud` DNS 指向本机后实测；通过后执行 v0.1 迭代关闭检查 |
 | 2026-06-17 | General | 新项目立项准备 | 已将定稿定位文档移动到本项目 `docs/progress/ad-hoc/`，并从 `agent-workflow` 复制团队工作流入口、baseline、templates、knowledge/progress 骨架 | Owner 切到本目录，以 Developer 角色开工 |
 
@@ -52,7 +53,7 @@
 
 | 优先级 | 待办 | 归属角色 | 来源 | 状态 |
 |--------|------|----------|------|------|
-| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 生产已按域名和独立目录部署，待 DNS / Owner 实测与迭代关闭检查 |
+| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 关闭检查提醒：v0.1 已上线、MVP 达成；待 Developer / Owner 确认完成并移除本条 |
 
 ## Bootstrap 记录
 - 时间：2026-06-17
