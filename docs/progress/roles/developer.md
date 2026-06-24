@@ -1,5 +1,17 @@
 # Developer 角色日志
 
+## 2026-06-24 — 测试环境部署（运维任务，Owner 授权）
+- 本次角色：Developer（测试环境部署经 Owner 授权兼做；生产部署仍归运维）
+- 动作：部署 + 收尾
+- 涉及产出：`/etc/systemd/system/workboard-api-test.service`、`/etc/nginx/sites-available/workboard-test.huiyiyou.cloud`、通配符证书 `*.huiyiyou.cloud`（certbot-dns-aliyun）、`src/server/index.js`（HOST 支持，commit `3df4809`）、`docs/knowledge/devops/workboard-test-deployment.md`、进度文档收尾
+- 结论：完成 workboard v0.1 测试环境部署并验证通过。后端 systemd 持久化 + 开机自启（绑 127.0.0.1:5180），前端 nginx serve dist，通配符证书自动续期。**关键约束**：公司（吉利研究院）上网行为管理拦 80/443 的未分类网站，改走**非标端口 8088 HTTPS**，Owner 公司网络实测 `https://115.191.43.79:8088` 可访问。部署手册已沉淀知识库。
+- 关联迭代：v0.1
+- 关联非迭代工作：测试环境部署
+- 关联 Change Note：无
+- 遗留问题/风险：阿里云 AccessKey 曾在对话明文出现，待 Owner 轮换（轮换后更新 `/etc/letsencrypt/aliyun.ini`）；生产部署待运维；`npm install` 2 个 high 漏洞（recharts 链路）与 3 个 drawer-skeleton 死代码仍待后续清理。
+- 下一步入口：Owner 跟测试沟通手动验收 → 通过后运维部署生产。
+- 收尾状态：已收尾
+
 ## 2026-06-23 — 实现阶段 R1
 - 本次角色：Developer（开发工程师）
 - 动作：实现

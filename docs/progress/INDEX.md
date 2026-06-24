@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.1
 - 当前模式：标准迭代
-- 当前阶段：实现阶段 — R1 已 commit（b5b18d9）、验证通过（`npm test` 45/45 + 前端 `vite build` + Playwright 四视图端到端真实数据渲染），进测试阶段
+- 当前阶段：实现 R1 完成 + 测试环境已部署（`https://115.191.43.79:8088`，公司网络实测可访问）；Owner 手动验收中
 - 阻塞项：无
-- 下一步入口：Owner 切到 Tester 角色进入测试阶段验收（Review 方：Tester 为主 + Developer 自检已完成）
+- 下一步入口：Owner 跟测试沟通手动验收；通过后由运维部署到生产（部署手册见 `docs/knowledge/devops/workboard-test-deployment.md`）
 
 ## 版本列表
 

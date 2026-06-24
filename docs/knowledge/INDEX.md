@@ -16,6 +16,8 @@
 
 ## DevOps（运维/部署）
 
+- [workboard 测试环境部署手册](devops/workboard-test-deployment.md)：systemd + nginx + 通配符证书部署步骤；**关键约束**：公司上网行为管理拦 80/443，测试环境走非标端口 HTTPS（8088）。
+
 ## Decisions（决策）
 
 ## Opportunities（机会池）
