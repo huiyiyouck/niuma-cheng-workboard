@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.1
 - 当前模式：标准迭代
-- 当前阶段：实现 R1 完成 + 测试环境已部署（`https://115.191.43.79:8088`，公司网络实测可访问）；Owner 手动验收中
+- 当前阶段：v0.1 生产环境已按确认域名 `workboard.huiyiyou.cloud` 重新部署；前端与后端均已迁入独立生产目录，开发仓库修改不会自动影响生产
 - 阻塞项：无
-- 下一步入口：Owner 跟测试沟通手动验收；通过后由运维部署到生产（部署手册见 `docs/knowledge/devops/workboard-test-deployment.md`）
+- 下一步入口：Owner 配置 / 确认 `workboard.huiyiyou.cloud` DNS 指向本机后实测；通过后执行 v0.1 迭代关闭检查
 
 ## 版本列表
 
@@ -16,7 +16,7 @@
 
 | 版本 | 迭代记录 | PRD | UI | 设计文档 | Summary | 状态 |
 |------|----------|-----|----|----------|---------|------|
-| v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | — | 进行中（实现 R1 完成、验证通过，待 commit + 测试阶段） |
+| v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | — | 进行中（生产已按域名和独立目录部署，待 DNS / Owner 实测与迭代关闭检查） |
 
 ## 当前 Change Notes
 
@@ -33,6 +33,7 @@
 
 | 日期 | 角色 | 工作 | 结论 | 下一步入口 |
 |------|------|------|------|------------|
+| 2026-06-24 | DevOps | v0.1 生产部署与开发/生产隔离整改 | 已撤回错误的 8089/IP 入口和开发目录软链；生产按 `workboard.huiyiyou.cloud` 443 部署，前端 `/var/www/workboard.huiyiyou.cloud` 与后端 `/opt/workboard-prod/app` 均为独立生产目录；本机 SNI 自检 200 | Owner 配置 / 确认 `workboard.huiyiyou.cloud` DNS 指向本机后实测；通过后执行 v0.1 迭代关闭检查 |
 | 2026-06-17 | General | 新项目立项准备 | 已将定稿定位文档移动到本项目 `docs/progress/ad-hoc/`，并从 `agent-workflow` 复制团队工作流入口、baseline、templates、knowledge/progress 骨架 | Owner 切到本目录，以 Developer 角色开工 |
 
 ## 跨任务待办
@@ -51,7 +52,7 @@
 
 | 优先级 | 待办 | 归属角色 | 来源 | 状态 |
 |--------|------|----------|------|------|
-| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 实现 R1 已 commit（b5b18d9）、验证通过，待 Tester 测试验收 |
+| P0 | 实现第一版只读看板 MVP：配置读取、路径解析、接入诊断视图、项目总览、跨项目需求/状态读取、60s 轮询 | Developer | 2026-06-17 Owner 定稿 `niuma-cheng-workboard` 立项方案 | 生产已按域名和独立目录部署，待 DNS / Owner 实测与迭代关闭检查 |
 
 ## Bootstrap 记录
 - 时间：2026-06-17
