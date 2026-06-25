@@ -1,5 +1,17 @@
 # Tester 角色日志
 
+## 2026-06-25 — 会话摘要
+- 本次角色：Tester（测试工程师）
+- 动作：收尾核对
+- 涉及文档：`docs/progress/INDEX.md`、`docs/progress/iterations/v0.1.md`、`docs/progress/iterations/v0.1-summary.md`
+- 结论：确认 v0.1 已关闭并上线，工作区启动时干净；`v0.1-test-plan.md`、`v0.1-test-report.md`、`tester.md` 与生产部署收尾均已入库，清理了归档文档中的过期“待提交”遗留描述。
+- 关联迭代：v0.1
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：v0.1 无阻塞遗留；根 `/root/Project/CLAUDE.md` 旧定位、设计系统全局化和 v0.2 功能机会仍按 summary 追踪。
+- 下一步入口：Owner 决定是否启动 v0.2 或处理根目录索引旧定位。
+- 收尾状态：已收尾
+
 ## 2026-06-24 — 会话摘要
 - 本次角色：Tester（测试工程师）
 - 动作：产出 / 验收
