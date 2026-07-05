@@ -1,14 +1,21 @@
 {
+  "ecosystem": {
+    "name": "niuma-cheng 生态",
+    "root_path": "..",
+    "root_session_id": null,
+    "claude_project_id": ["-Users-ck-Project-niuma-cheng", "-root-Project"]
+  },
   "refresh": {
     "interval_seconds": 60
   },
   "projects": [
     {
       "id": "workflow",
-      "name": "团队工作流",
+      "name": "agent-workflow（框架真源）",
       "path": "../agent-workflow",
       "kind": "workflow-source",
-      "enabled": true
+      "enabled": true,
+      "claude_project_id": ["-Users-ck-Project-niuma-cheng-agent-workflow", "-root-Project-agent-workflow"]
     },
     {
       "id": "xiaobao",
@@ -16,28 +23,32 @@
       "path": "../niuma-cheng-xiaobao",
       "kind": "business",
       "enabled": true,
-      "url": "https://news.huiyiyou.cloud"
+      "url": "https://news.huiyiyou.cloud",
+      "claude_project_id": ["-Users-ck-Project-niuma-cheng-niuma-cheng-xiaobao", "-root-Project-niuma-cheng-xiaobao", "-root-Project-niuma-cheng-xiaobao-server"]
     },
     {
       "id": "ai",
       "name": "AI 处理中枢",
       "path": "../niuma-cheng-ai",
       "kind": "business",
-      "enabled": true
+      "enabled": true,
+      "claude_project_id": ["-root-Project-niuma-cheng-ai"]
     },
     {
       "id": "coordination",
-      "name": "跨项目协调仓库",
+      "name": "公告板（coordination）",
       "path": "../niuma-cheng-coordination",
       "kind": "coordination",
-      "enabled": true
+      "enabled": true,
+      "claude_project_id": ["-root-Project-niuma-cheng-coordination"]
     },
     {
       "id": "workboard",
-      "name": "跨项目 Agent 工作看板",
+      "name": "项目管理工作台",
       "path": ".",
       "kind": "workboard",
-      "enabled": true
+      "enabled": true,
+      "claude_project_id": ["-Users-ck-Project-niuma-cheng-niuma-cheng-workboard", "-root-Project-niuma-cheng-workboard"]
     }
   ],
   "coordination": {

@@ -4,11 +4,11 @@
 
 ## 当前项目状态
 
-- 当前迭代：无（v0.1 已关闭）
-- 当前模式：非迭代（产品定位 / Product Brief）
-- 当前阶段：v0.2 前置——生态工作流体系定位调研中（为 v0.2 范围输入做准备）；调研中发现「参谋长座位缺文档库/留痕目录」缺口，待走 BCR 补
+- 当前迭代：v0.2
+- 当前模式：标准迭代
+- 当前阶段：实现（R1 进行中——Developer 按设计文档落地全部功能）
 - 阻塞项：无
-- 下一步入口：完成生态定位文档 → Owner 确认 → PM 创建 v0.2 PRD 启动标准迭代
+- 下一步入口：Developer 完成实现 → 自测 → Owner 验收
 
 ## 版本列表
 
@@ -17,17 +17,22 @@
 | 版本 | 迭代记录 | PRD | UI | 设计文档 | Summary | 状态 |
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
+| v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | 待创建 | 🔧 实现（R1 进行中，含 IRC-001 数据库变更） |
 
 ## 当前 Change Notes
 
 | Change Note | 关联工作 | 状态 | 下一步 |
 |-------------|----------|------|--------|
+| [IRC-001](iterations/v0.2-design.md#实现阶段变更记录) 数据库选型变更 SQLite → PostgreSQL | v0.2 实现 | 已落地 | DevOps 部署时按新配置（.env + PostgreSQL workboard 库）落地；归档随 v0.2 收尾 |
+| [IRC-002](iterations/v0.2-design.md#实现阶段变更记录) 会话同步双数据源（本机 + 服务器 rsync 镜像；claude_project_id 支持数组） | v0.2 实现 | 已落地 | DevOps 部署时服务器侧不设 CLAUDE_REMOTE_SOURCES；归档随 v0.2 收尾 |
 
 ## 当前非迭代工作
 
 | 日期 | 模式 | 记录 | 状态 | 下一步 |
 |------|------|------|------|--------|
-| 2026-07-03 | 产品定位 / Product Brief | 生态工作流体系定位调研（v0.2 前置输入） | 进行中 | 产出定位文档 → Owner Review → 定稿后输入 v0.2 PRD |
+| 2026-07-05 | 技术预研 / Spike | [多来源会话同步调研（Codex / Trae CN）](ad-hoc/2026-07-05-spike-multi-source-session-sync.md) | 已完成 | Owner 拍板 Codex 同步排期（v0.3 或并入 v0.2）；Trae CN 挂起 |
+| 2026-07-04 | 产品定位 / Product Brief | v0.2 UI 方案草案（项目会话视图 + 角色卡片 + 映射配置） | 已定稿 | — |
+| 2026-07-05 | 标准迭代 v0.2 | PRD 定稿（R2 Review 通过 + Owner 拍板全部待澄清问题） | 已定稿 | Architect 进入设计阶段 |
 | 2026-06-17 | 立项 / Positioning | [跨项目 Agent 工作看板立项定位](ad-hoc/2026-06-17-workboard-positioning.md) / [Review 记录](ad-hoc/2026-06-17-workboard-positioning-review.md) | 已定稿，Owner Review 1-16 全部确认 | Developer 基于定稿方案实现第一版只读看板 |
 
 ## 最近收尾摘要

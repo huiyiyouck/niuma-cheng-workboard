@@ -22,14 +22,13 @@ test("isTodoDone：完成标记命中，未完成不误判", () => {
 test("解析真实本项目 INDEX.md：当前状态 + 未完成待办", async () => {
   const md = await readFile(REAL_INDEX, "utf8");
   const result = parseProjectIndex(md, { sourcePath: REAL_INDEX });
-  assert.equal(result.iteration, "v0.1");
+  // 注：本用例读取真实 INDEX.md（随迭代推进而变化），断言需跟随当前实际状态同步更新
+  assert.equal(result.iteration, "v0.2");
   assert.equal(result.mode, "标准迭代");
   assert.equal(result.blocked, null); // 「无」→ null
   assert.ok(result.phase && result.phase.length > 0);
-  // 跨任务待办当前 1 条 P0「待启动」（未完成）
-  assert.equal(result.todos.length, 1);
-  assert.equal(result.todos[0].priority, "P0");
-  assert.equal(result.todos[0].role, "Developer");
+  // 跨任务待办当前为空（v0.2 实现阶段暂无登记项）
+  assert.equal(result.todos.length, 0);
 });
 
 test("完成态待办被剔除", () => {

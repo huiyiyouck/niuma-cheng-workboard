@@ -3,6 +3,11 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSnapshot } from "./snapshot.js";
+import { withClient, ensureSchema } from "./db.js";
+import { syncAllSessions, getSyncStatus } from "./sync/claude-sync.js";
+import { parseVersionList } from "./parsers/project-index.js";
+import { parseIterationRecord } from "./parsers/iteration-record.js";
+import { loadConfig, validateConfig } from "./config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(here, "../..");
@@ -25,29 +30,338 @@ const MIME = {
   ".map": "application/json; charset=utf-8",
 };
 
-/**
- * 创建只读看板 HTTP 服务。
- * - GET /api/snapshot：现场生成整批快照
- * - 其他路径：服务 frontend/dist 静态资源，未命中回退 index.html（SPA）
- * - dist 不存在：返回首启提示页，引导执行 npm run build
- */
+function sendJson(res, status, payload) {
+  const body = JSON.stringify(payload);
+  res.writeHead(status, { "content-type": MIME[".json"] });
+  res.end(body);
+}
+
+function sendHtml(res, status, html) {
+  res.writeHead(status, { "content-type": MIME[".html"] });
+  res.end(html);
+}
+
+function sendBuffer(res, status, contentType, data) {
+  res.writeHead(status, { "content-type": contentType });
+  res.end(data);
+}
+
+function readJsonBody(req, limit = 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    let size = 0;
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new Error("body too large"));
+        req.destroy();
+        return;
+      }
+      data += chunk;
+    });
+    req.on("end", () => {
+      if (!data) { resolve({}); return; }
+      try { resolve(JSON.parse(data)); }
+      catch (e) { reject(e); }
+    });
+    req.on("error", reject);
+  });
+}
+
 export function createServer({ configPath = DEFAULT_CONFIG_PATH, distDir = DEFAULT_DIST_DIR } = {}) {
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://localhost");
-    if (url.pathname === "/api/snapshot") {
-      try {
-        const snapshot = await buildSnapshot({ configPath });
-        return sendJson(res, 200, snapshot);
-      } catch (err) {
-        // 根配置不可读 / JSON 错误：整页读取异常
-        return sendJson(res, 500, { error: String(err?.message || err) });
+    const method = req.method;
+
+    try {
+      if (url.pathname === "/api/snapshot") {
+        try {
+          const snapshot = await buildSnapshot({ configPath });
+          let syncStatus = null;
+          try { syncStatus = await getSyncStatus(); }
+          catch (err) { syncStatus = { status: "error", error: String(err?.message || err) }; }
+          return sendJson(res, 200, { ...snapshot, syncStatus });
+        } catch (err) {
+          return sendJson(res, 500, { error: String(err?.message || err) });
+        }
       }
+
+      if (url.pathname === "/api/sessions" && method === "GET") {
+        return await handleListSessions(res, url);
+      }
+
+      if (url.pathname === "/api/sessions/details" && method === "GET") {
+        return await handleSessionDetails(res, url);
+      }
+
+      if (url.pathname === "/api/mappings" && method === "GET") {
+        return await handleListMappings(res, url);
+      }
+
+      if (url.pathname === "/api/mappings" && method === "POST") {
+        return await handleCreateMapping(req, res);
+      }
+
+      if (url.pathname === "/api/mappings" && method === "DELETE") {
+        return await handleDeleteMapping(res, url);
+      }
+
+      if (url.pathname === "/api/timeline/versions" && method === "GET") {
+        return await handleTimelineVersions(res, url, configPath);
+      }
+
+      if (url.pathname === "/api/timeline/detail" && method === "GET") {
+        return await handleTimelineDetail(res, url, configPath);
+      }
+
+      if (url.pathname === "/api/sync" && method === "POST") {
+        return await handleSync(req, res, url);
+      }
+
+      if (url.pathname.startsWith("/api/")) {
+        return sendJson(res, 404, { error: `未知 API: ${url.pathname}` });
+      }
+      return serveStatic(res, distDir, url.pathname);
+    } catch (err) {
+      return sendJson(res, 500, { error: String(err?.message || err) });
     }
-    if (url.pathname.startsWith("/api/")) {
-      return sendJson(res, 404, { error: `未知 API: ${url.pathname}` });
-    }
-    return serveStatic(res, distDir, url.pathname);
   });
+}
+
+async function handleListSessions(res, url) {
+  await ensureSchema();
+  let projectId = url.searchParams.get("project_id");
+  const status = url.searchParams.get("status") || "all";
+  const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 200);
+  const offset = Number(url.searchParams.get("offset")) || 0;
+
+  // claude_project_id 支持单值或数组（IRC-002：同一项目在本机与服务器各有会话目录）
+  let projectDirIds = null;
+  if (projectId) {
+    try {
+      const rawConfig = await loadConfig(DEFAULT_CONFIG_PATH);
+      const project = rawConfig?.projects?.find((p) => p.id === projectId);
+      if (project?.claude_project_id) {
+        projectDirIds = [].concat(project.claude_project_id);
+      } else if (projectId === "ecosystem-root" && rawConfig?.ecosystem?.claude_project_id) {
+        projectDirIds = [].concat(rawConfig.ecosystem.claude_project_id);
+      }
+    } catch {}
+  }
+
+  const whereClauses = [];
+  const params = [];
+  let paramIdx = 1;
+
+  if (projectDirIds) {
+    whereClauses.push(`s.project_id = ANY($${paramIdx++})`);
+    params.push(projectDirIds);
+  } else if (projectId) {
+    whereClauses.push(`s.project_id = $${paramIdx++}`);
+    params.push(projectId);
+  }
+
+  if (status === "mapped") {
+    whereClauses.push("m.id IS NOT NULL");
+  } else if (status === "unmapped") {
+    whereClauses.push("m.id IS NULL");
+  }
+
+  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+  await withClient(async (client) => {
+    const totalRes = await client.query(
+      `SELECT COUNT(*)::int as cnt FROM claude_sessions s LEFT JOIN session_mappings m ON s.id = m.session_id ${whereSql}`,
+      params
+    );
+    const total = totalRes.rows[0].cnt;
+
+    const sessionsRes = await client.query(
+      `SELECT s.*,
+              m.id as mapping_id, m.role as mapped_role, m.project_id as mapped_project_id, m.note as mapping_note,
+              lm.last_messages
+       FROM claude_sessions s
+       LEFT JOIN session_mappings m ON s.id = m.session_id
+       LEFT JOIN LATERAL (
+         SELECT (
+           SELECT json_agg(json_build_object(
+             'role', sub.role,
+             'content', left(sub.content, 200),
+             'created_at', sub.created_at::text
+           ) ORDER BY sub.created_at DESC)
+           FROM (
+             SELECT role, content, created_at
+             FROM claude_messages
+             WHERE session_id = s.id
+             ORDER BY created_at DESC
+             LIMIT 2
+           ) sub
+         ) as last_messages
+       ) lm ON true
+       ${whereSql}
+       ORDER BY s.last_message_at DESC
+       LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+      [...params, limit, offset]
+    );
+
+    sendJson(res, 200, {
+      items: sessionsRes.rows,
+      total,
+      limit,
+      offset,
+    });
+  });
+}
+
+async function handleSessionDetails(res, url) {
+  const sessionId = url.searchParams.get("id");
+  if (!sessionId) return sendJson(res, 400, { error: "id 参数缺失" });
+
+  await ensureSchema();
+  await withClient(async (client) => {
+    const sessionRes = await client.query(
+      `SELECT s.*, m.id as mapping_id, m.role as mapped_role, m.project_id as mapped_project_id, m.note as mapping_note
+       FROM claude_sessions s
+       LEFT JOIN session_mappings m ON s.id = m.session_id
+       WHERE s.id = $1`,
+      [sessionId]
+    );
+
+    if (sessionRes.rows.length === 0) {
+      return sendJson(res, 404, { error: "会话不存在" });
+    }
+
+    const messagesRes = await client.query(
+      `SELECT id, session_id, role, content, created_at, has_tool_use, tool_name, has_thinking
+       FROM claude_messages
+       WHERE session_id = $1
+       ORDER BY created_at ASC`,
+      [sessionId]
+    );
+
+    sendJson(res, 200, {
+      session: sessionRes.rows[0],
+      messages: messagesRes.rows,
+    });
+  });
+}
+
+async function handleListMappings(res, url) {
+  const projectId = url.searchParams.get("project_id");
+  await ensureSchema();
+
+  await withClient(async (client) => {
+    let sql = `SELECT m.id, m.session_id, m.project_id, m.role, m.note, m.created_at, m.updated_at,
+                      s.title as session_title, s.last_message_at, s.message_count
+               FROM session_mappings m
+               LEFT JOIN claude_sessions s ON m.session_id = s.id`;
+    const params = [];
+
+    if (projectId) {
+      sql += " WHERE m.project_id = $1";
+      params.push(projectId);
+    }
+    sql += " ORDER BY m.updated_at DESC";
+
+    const result = await client.query(sql, params);
+    sendJson(res, 200, { items: result.rows, total: result.rows.length });
+  });
+}
+
+async function handleCreateMapping(req, res) {
+  const body = await readJsonBody(req);
+  const { session_id, project_id, role, note } = body;
+  if (!session_id || !project_id || !role) {
+    return sendJson(res, 400, { error: "session_id, project_id, role 必填" });
+  }
+
+  await ensureSchema();
+  await withClient(async (client) => {
+    const sessionRes = await client.query("SELECT id FROM claude_sessions WHERE id = $1", [session_id]);
+    if (sessionRes.rows.length === 0) {
+      return sendJson(res, 404, { error: "会话不存在" });
+    }
+
+    const now = new Date().toISOString();
+
+    // 以 (project_id, role) 为业务唯一键：每个项目+角色只能映射到一个会话
+    // 重新配置时更新现有映射，而不是新增
+    const existing = await client.query(
+      "SELECT id FROM session_mappings WHERE project_id = $1 AND role = $2",
+      [project_id, role]
+    );
+
+    if (existing.rows.length > 0) {
+      await client.query(
+        `UPDATE session_mappings SET session_id = $1, note = $2, updated_at = $3 WHERE id = $4`,
+        [session_id, note || null, now, existing.rows[0].id]
+      );
+      const updated = await client.query("SELECT * FROM session_mappings WHERE id = $1", [existing.rows[0].id]);
+      sendJson(res, 200, updated.rows[0]);
+    } else {
+      const insertRes = await client.query(
+        `INSERT INTO session_mappings (session_id, project_id, role, note, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [session_id, project_id, role, note || null, now, now]
+      );
+      sendJson(res, 201, insertRes.rows[0]);
+    }
+  });
+}
+
+async function handleDeleteMapping(res, url) {
+  const sessionId = url.searchParams.get("session_id");
+  if (!sessionId) return sendJson(res, 400, { error: "session_id 参数缺失" });
+
+  await ensureSchema();
+  await withClient(async (client) => {
+    const existing = await client.query("SELECT id FROM session_mappings WHERE session_id = $1", [sessionId]);
+    if (existing.rows.length === 0) {
+      return sendJson(res, 404, { error: "映射不存在" });
+    }
+
+    await client.query("DELETE FROM session_mappings WHERE session_id = $1", [sessionId]);
+    sendJson(res, 200, { ok: true });
+  });
+}
+
+async function handleTimelineVersions(res, url, configPath) {
+  const projectId = url.searchParams.get("project_id");
+  if (!projectId) return sendJson(res, 400, { error: "project_id 参数缺失" });
+
+  const cfg = await loadConfig(configPath);
+  const validated = validateConfig(cfg, { configPath });
+  const project = validated.projects.find((p) => p.id === projectId);
+  if (!project || !project.resolvedPath) return sendJson(res, 404, { error: "项目不存在" });
+
+  const indexPath = path.join(project.resolvedPath, "docs", "progress", "INDEX.md");
+  const md = await readFile(indexPath, "utf8");
+  const { versions, errors } = parseVersionList(md, { sourcePath: indexPath });
+  sendJson(res, 200, { versions, errors });
+}
+
+async function handleTimelineDetail(res, url, configPath) {
+  const projectId = url.searchParams.get("project_id");
+  const version = url.searchParams.get("version");
+  if (!projectId || !version) return sendJson(res, 400, { error: "project_id 和 version 必填" });
+
+  const cfg = await loadConfig(configPath);
+  const validated = validateConfig(cfg, { configPath });
+  const project = validated.projects.find((p) => p.id === projectId);
+  if (!project || !project.resolvedPath) return sendJson(res, 404, { error: "项目不存在" });
+
+  const recordPath = path.join(project.resolvedPath, "docs", "progress", "iterations", `${version}.md`);
+  const md = await readFile(recordPath, "utf8");
+  const result = parseIterationRecord(md, { sourcePath: recordPath, version });
+  sendJson(res, 200, result);
+}
+
+async function handleSync(req, res, url) {
+  let body = {};
+  try { body = await readJsonBody(req); } catch {}
+  const force = body?.force === true || url.searchParams.get("force") === "1";
+  const result = await syncAllSessions({ force });
+  sendJson(res, 200, result);
 }
 
 async function serveStatic(res, distDir, pathname) {
@@ -63,7 +377,6 @@ async function serveStatic(res, distDir, pathname) {
 
   const rel = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
   const filePath = path.join(distDir, rel);
-  // 防目录穿越：解析后必须仍在 distDir 内
   if (filePath !== distDir && !filePath.startsWith(distDir + path.sep)) {
     return sendJson(res, 403, { error: "forbidden" });
   }
@@ -71,7 +384,6 @@ async function serveStatic(res, distDir, pathname) {
     const data = await readFile(filePath);
     return sendBuffer(res, 200, MIME[path.extname(filePath)] || "application/octet-stream", data);
   } catch {
-    // SPA 回退到 index.html
     try {
       const data = await readFile(path.join(distDir, "index.html"));
       return sendBuffer(res, 200, MIME[".html"], data);
@@ -79,22 +391,6 @@ async function serveStatic(res, distDir, pathname) {
       return sendHtml(res, 200, firstRunPage());
     }
   }
-}
-
-function sendJson(res, status, payload) {
-  const body = JSON.stringify(payload);
-  res.writeHead(status, { "content-type": MIME[".json"] });
-  res.end(body);
-}
-
-function sendHtml(res, status, html) {
-  res.writeHead(status, { "content-type": MIME[".html"] });
-  res.end(html);
-}
-
-function sendBuffer(res, status, contentType, data) {
-  res.writeHead(status, { "content-type": contentType });
-  res.end(data);
 }
 
 function firstRunPage() {
@@ -120,4 +416,13 @@ if (isMain) {
   createServer().listen(port, host, () => {
     console.log(`项目管理工作台已启动: http://${host}:${port}`);
   });
+
+  // 启动时后台触发一次全量会话同步（不阻塞服务启动；数据库不可达时只记录日志，不影响只读 API）
+  syncAllSessions()
+    .then((r) => {
+      console.log(`启动同步完成：${r.projectCount} 个项目目录，共 ${r.results.length} 个会话文件`);
+    })
+    .catch((err) => {
+      console.error("启动同步失败（不影响服务运行，可稍后通过 POST /api/sync 手动重试）：", err?.message || err);
+    });
 }

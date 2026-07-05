@@ -36,7 +36,9 @@ import {
   Flag,
   Unlink,
   GitPullRequest,
+  MessagesSquare,
 } from "lucide-react";
+import { EcosystemView, ConversationView } from "./components/EcosystemView";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -1031,7 +1033,9 @@ function DiagnosticsView({ onRowClick }: { onRowClick: (p: Project) => void }) {
 
 type ActiveFilter = "进行中" | "已关闭" | "全部";
 const CLOSED_STATUSES: ReqStatus[] = ["已关闭"];
-const BCR_CLOSED_STATUSES = ["已回流下游"];
+// 终态可能带后缀（如「已回流下游（终态）」），用包含匹配；已拒绝也是终态
+const BCR_CLOSED_STATUSES = ["已回流下游", "已拒绝"];
+const isBcrClosed = (status: string) => BCR_CLOSED_STATUSES.some((s) => status.includes(s));
 
 function CrossProjectView({ onItemClick }: { onItemClick: (item: CrossProjectItem) => void }) {
   const { crossItems: CROSS_PROJECT_ITEMS, bcrItems: BCR_ITEMS, commItems: COMM_ITEMS } = useViewModel();
@@ -1061,8 +1065,8 @@ function CrossProjectView({ onItemClick }: { onItemClick: (item: CrossProjectIte
   });
 
   const visibleBcr = BCR_ITEMS.filter((item) => {
-    if (bcrFilter === "进行中") return !BCR_CLOSED_STATUSES.includes(item.status);
-    if (bcrFilter === "已关闭") return BCR_CLOSED_STATUSES.includes(item.status);
+    if (bcrFilter === "进行中") return !isBcrClosed(item.status);
+    if (bcrFilter === "已关闭") return isBcrClosed(item.status);
     return true;
   });
 
@@ -1212,16 +1216,17 @@ function CrossProjectView({ onItemClick }: { onItemClick: (item: CrossProjectIte
             : visibleBcr.map((bcr) => (
               <div key={bcr.id} className="bg-white rounded-xl border border-border p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-mono text-muted-foreground">{bcr.id}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="text-xs font-mono text-muted-foreground whitespace-nowrap">{bcr.id}</span>
                       <BcrStatusBadge status={bcr.status} />
                     </div>
                     <p className="text-sm text-foreground leading-relaxed">{bcr.summary}</p>
                   </div>
-                  <div className="text-right flex-shrink-0">
+                  {/* 影响范围可能很长：限宽 + 两行截断，避免挤压左列（曾致摘要一字一行竖排） */}
+                  <div className="text-right flex-shrink-0 max-w-[200px]">
                     <p className="text-xs text-muted-foreground mb-0.5">目标</p>
-                    <p className="text-xs font-mono text-foreground/60">{bcr.target}</p>
+                    <p className="text-xs font-mono text-foreground/60 line-clamp-2 break-all">{bcr.target}</p>
                   </div>
                 </div>
               </div>
@@ -1265,10 +1270,11 @@ function EmptyState({ icon: Icon, message }: { icon: React.FC<{ className?: stri
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-type View = "workbench" | "deploy" | "diagnostics" | "crossproject";
+type View = "workbench" | "deploy" | "diagnostics" | "crossproject" | "sessions";
 
 const NAV_ITEMS: { id: View; label: string; Icon: React.FC<{ className?: string }> }[] = [
   { id: "workbench", label: "工作台", Icon: LayoutDashboard },
+  { id: "sessions", label: "项目会话", Icon: MessagesSquare },
   { id: "deploy", label: "部署", Icon: Rocket },
   { id: "diagnostics", label: "接入诊断", Icon: Stethoscope },
   { id: "crossproject", label: "跨项目", Icon: Network },
@@ -1276,6 +1282,7 @@ const NAV_ITEMS: { id: View; label: string; Icon: React.FC<{ className?: string 
 
 const VIEW_LABELS: Record<View, string> = {
   workbench: "工作台",
+  sessions: "项目会话",
   deploy: "部署",
   diagnostics: "接入诊断",
   crossproject: "跨项目",
@@ -1343,6 +1350,9 @@ export default function App() {
   const [drawerProjectId, setDrawerProjectId] = useState<string | null>(null);
   const [drawerDiagId, setDrawerDiagId] = useState<string | null>(null);
   const [drawerCrossId, setDrawerCrossId] = useState<string | null>(null);
+  const [conversationSessionId, setConversationSessionId] = useState<string | null>(null);
+  const [mappingsVersion, setMappingsVersion] = useState(0);
+  const refreshMappings = () => setMappingsVersion((v) => v + 1);
 
   const vm = ui.state === "ready" ? mapSnapshot(ui.data) : EMPTY_VIEW_MODEL;
   const isLoading = ui.state === "loading";
@@ -1389,6 +1399,7 @@ export default function App() {
             ) : isLoading ? (
               <>
                 {activeView === "workbench" && <WorkbenchSkeleton />}
+                {activeView === "sessions" && <WorkbenchSkeleton />}
                 {activeView === "deploy" && <DeploySkeleton />}
                 {activeView === "diagnostics" && <DiagnosticsSkeleton />}
                 {activeView === "crossproject" && <CrossProjectSkeleton />}
@@ -1399,6 +1410,14 @@ export default function App() {
                   <WorkbenchView
                     onProjectClick={(p) => setDrawerProjectId(p.id)}
                     onViewCrossProject={() => handleViewChange("crossproject")}
+                  />
+                )}
+                {activeView === "sessions" && (
+                  <EcosystemView
+                    projects={vm.projects}
+                    onSessionClick={(id) => setConversationSessionId(id)}
+                    onRefreshMappings={refreshMappings}
+                    mappingsVersion={mappingsVersion}
                   />
                 )}
                 {activeView === "deploy" && <DeployView />}
@@ -1424,6 +1443,13 @@ export default function App() {
         <Drawer open={!!drawerCrossId} onClose={() => setDrawerCrossId(null)} title={drawerCrossItem?.id ?? "需求详情"}>
           {drawerCrossItem ? <CrossProjectDrawerContent item={drawerCrossItem} /> : <DrawerGone />}
         </Drawer>
+
+        {conversationSessionId && (
+          <ConversationView
+            sessionId={conversationSessionId}
+            onClose={() => setConversationSessionId(null)}
+          />
+        )}
       </div>
     </ViewModelProvider>
   );

@@ -1,10 +1,6 @@
 import { findSection, parseFirstTable, parseListFields } from "./markdown-table.js";
 import { makeError, SEVERITY } from "../errors.js";
 
-/**
- * 完成态判定（设计 2.2）。状态文本包含完成标记视为完成，从待办汇总中剔除。
- * 注意先排除「未完成」，避免「完成」子串误命中。
- */
 const DONE_MARKERS = ["已完成", "已关闭", "已归档", "✅"];
 
 export function isTodoDone(status) {
@@ -22,16 +18,56 @@ function normalizeBlocked(value) {
   return v;
 }
 
-/**
- * 解析 business / workboard 项目的 INDEX.md。
- *
- * @returns {{
- *   iteration: string|null, mode: string|null, phase: string|null,
- *   blocked: string|null, nextStep: string|null,
- *   todos: Array<{priority,text,role,status}>,
- *   errors: object[]
- * }}
- */
+const STATUS_MAP = {
+  "进行中": "in_progress",
+  "已完成": "completed",
+  "已关闭": "completed",
+  "已归档": "archived",
+  "未开始": "not_started",
+  "规划中": "planned",
+  "已暂停": "paused",
+  "阻塞": "blocked",
+};
+
+function normalizeStatus(text) {
+  if (!text) return "unknown";
+  const t = text.trim();
+  for (const [key, val] of Object.entries(STATUS_MAP)) {
+    if (t.includes(key)) return val;
+  }
+  return "unknown";
+}
+
+export function parseVersionList(markdown, { sourcePath = null } = {}) {
+  const errors = [];
+  const section = findSection(markdown, "## 版本列表");
+  if (!section) {
+    return { versions: [], errors: [
+      makeError({ code: "parse-warning", message: "未找到「## 版本列表」区域", severity: SEVERITY.WARNING, sourcePath }),
+    ]};
+  }
+  const table = parseFirstTable(section);
+  if (!table) {
+    return { versions: [], errors: [
+      makeError({ code: "parse-warning", message: "版本列表区域无表格", severity: SEVERITY.WARNING, sourcePath }),
+    ]};
+  }
+  const hasVersion = table.headers.includes("版本");
+  const hasStatus = table.headers.includes("状态");
+  if (!hasVersion) {
+    return { versions: [], errors: [
+      makeError({ code: "read-error", message: "版本列表缺少「版本」列", severity: SEVERITY.ERROR, sourcePath }),
+    ]};
+  }
+  const versions = table.rows.map((r) => ({
+    version: r["版本"]?.trim() ?? "",
+    title: r["主题"]?.trim() ?? r["名称"]?.trim() ?? r["标题"]?.trim() ?? "",
+    status: hasStatus ? normalizeStatus(r["状态"]) : "unknown",
+    releaseDate: r["发布时间"]?.trim() || r["发布日期"]?.trim() || null,
+  })).filter((v) => v.version);
+  return { versions, errors };
+}
+
 export function parseProjectIndex(markdown, { sourcePath = null } = {}) {
   const errors = [];
 

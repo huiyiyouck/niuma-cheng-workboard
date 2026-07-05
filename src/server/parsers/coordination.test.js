@@ -65,12 +65,14 @@ test("readCoordination 读真实仓：活跃需求/阻塞/计数符合预期", a
     { id: "ai", name: "AI 处理中枢" },
   ]);
   const result = await readCoordination(REAL_COORD, { resolveProjectIds: match });
+  // 注：本用例读取真实 niuma-cheng-coordination 仓（跨项目共享真源，持续演进），
+  // 断言需跟随该仓当前实际状态同步更新
   assert.equal(result.status, "ok");
-  assert.equal(result.activeRequestCount, 1); // REQ-001 联调中
-  assert.equal(result.blockerCount, 0); // 两条均非活跃
-  assert.equal(result.contractCount, 1); // news-l1.md
-  assert.equal(result.communicationCount, 1); // REQ-001（排除 README）
-  assert.equal(result.bcrCount, 2);
+  assert.equal(result.activeRequestCount, 2); // REQ-002 已承接 + REQ-003 已提报（REQ-001 已关闭不计入）
+  assert.equal(result.blockerCount, 0); // 当前无活跃阻塞
+  assert.equal(result.contractCount, 2);
+  assert.equal(result.communicationCount, 2); // REQ-001 + REQ-002（排除 README）
+  assert.equal(result.bcrCount, 10);
 });
 
 test("readCoordination 目录不存在 → status read-error", async () => {

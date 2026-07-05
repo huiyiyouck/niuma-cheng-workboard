@@ -147,6 +147,135 @@ export interface SnapshotResult {
     communications: { id: string; reqId: string | null; projects: string[]; summary: string | null }[];
   };
   todos: BackendTodo[];
+  syncStatus?: SyncStatus;
+}
+
+// ─── v0.2：会话同步相关类型 ─────────────────────────────────────────────────
+
+export interface SyncStatus {
+  status: "synced" | "not_synced" | "error";
+  sessionCount: number;
+  messageCount: number;
+  lastSyncedAt: string | null;
+  error?: string;
+}
+
+export interface SessionPreviewMessage {
+  role: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ClaudeSession {
+  id: string;
+  project_id: string;
+  project_name: string;
+  title: string;
+  first_message_at: string;
+  last_message_at: string;
+  message_count: number;
+  user_message_count: number;
+  assistant_message_count: number;
+  jsonl_path: string;
+  file_mtime: string;
+  last_byte_pos: number;
+  synced_at: string;
+  detected_role?: string | null;
+  role_confidence?: number | null;
+  mapping_id?: number | null;
+  mapped_role?: string | null;
+  last_messages?: SessionPreviewMessage[] | null;
+  mapped_project_id?: string | null;
+  mapping_note?: string | null;
+}
+
+export interface ClaudeMessage {
+  id: string;
+  session_id: string;
+  role: "user" | "assistant" | "unknown";
+  content: string;
+  created_at: string;
+  has_tool_use: number;
+  tool_name: string | null;
+  has_thinking: number;
+}
+
+export interface SessionMapping {
+  id: number;
+  session_id: string;
+  project_id: string;
+  role: string;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+  session_title?: string | null;
+  last_message_at?: string | null;
+  message_count?: number | null;
+}
+
+export interface SessionListResponse {
+  items: ClaudeSession[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface SessionDetailResponse {
+  session: ClaudeSession;
+  messages: ClaudeMessage[];
+}
+
+export interface MappingListResponse {
+  items: SessionMapping[];
+  total: number;
+}
+
+export interface SyncResult {
+  syncedAt: string;
+  projectCount: number;
+  results: { projectId: string; projectName: string; sessionId: string; status: string; messageCount?: number }[];
+}
+
+// ─── v0.2：迭代时间轴相关类型 ───────────────────────────────────────────────
+
+export type TimelineVersionStatus = "in_progress" | "completed" | "archived" | "not_started" | "planned" | "paused" | "blocked" | "unknown";
+
+export interface TimelineVersion {
+  version: string;
+  title: string;
+  status: TimelineVersionStatus;
+  releaseDate: string | null;
+}
+
+export type TimelineStageStatus = "finalized" | "in_review" | "in_progress" | "not_started" | "blocked" | "completed" | "skipped" | "unknown";
+
+export interface TimelineStage {
+  id: string;
+  name: string;
+  status: TimelineStageStatus;
+  standard?: boolean;
+  reviewResult: string | null;
+  summary: string | null;
+}
+
+export interface TimelineVersionsResponse {
+  versions: TimelineVersion[];
+  errors: { message: string; severity?: string }[];
+}
+
+export interface TimelineDetailResponse {
+  version: string;
+  stages: TimelineStage[];
+  currentStage: TimelineStage | null;
+  summary: {
+    version: string | null;
+    completedCount: number;
+    totalStages: number;
+    progress: number;
+    isClosed: boolean;
+    blockedStage: string | null;
+  };
+  errors: { message: string; severity?: string }[];
 }
 
 // ─── 适配：后端 SnapshotResult → 前端 ViewModel ──────────────────────────────
