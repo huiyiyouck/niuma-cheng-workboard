@@ -27,8 +27,8 @@ test("解析真实本项目 INDEX.md：当前状态 + 未完成待办", async ()
   assert.equal(result.mode, "标准迭代");
   assert.equal(result.blocked, null); // 「无」→ null
   assert.ok(result.phase && result.phase.length > 0);
-  // 跨任务待办当前为空（v0.2 实现阶段暂无登记项）
-  assert.equal(result.todos.length, 0);
+  // 跨任务待办：2 条 v0.3 方向（会话迭代标签、菜单精简 5→3），均归属 PM 待研究
+  assert.equal(result.todos.length, 2);
 });
 
 test("完成态待办被剔除", () => {

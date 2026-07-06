@@ -64,7 +64,21 @@ export async function closePool() {
   }
 }
 
-export async function ensureSchema() {
+let _schemaReady = null;
+
+// DDL（含 ALTER TABLE ADD COLUMN）需要 ACCESS EXCLUSIVE 锁，同步大事务进行时会与之抢锁。
+// 每请求都重跑会在同步期间把所有 HTTP 请求堵死，故进程内只执行一次。
+export function ensureSchema() {
+  if (!_schemaReady) {
+    _schemaReady = runSchemaDDL().catch((err) => {
+      _schemaReady = null; // 失败不缓存，允许下次重试
+      throw err;
+    });
+  }
+  return _schemaReady;
+}
+
+async function runSchemaDDL() {
   await withClient(async (client) => {
     await client.query(`
       CREATE TABLE IF NOT EXISTS claude_sessions (
@@ -82,11 +96,13 @@ export async function ensureSchema() {
         last_byte_pos INTEGER NOT NULL DEFAULT 0,
         synced_at TEXT NOT NULL,
         detected_role TEXT,
-        role_confidence REAL
+        role_confidence REAL,
+        source TEXT NOT NULL DEFAULT 'claude-code'
       )
     `);
     await client.query("ALTER TABLE claude_sessions ADD COLUMN IF NOT EXISTS detected_role TEXT");
     await client.query("ALTER TABLE claude_sessions ADD COLUMN IF NOT EXISTS role_confidence REAL");
+    await client.query("ALTER TABLE claude_sessions ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'claude-code'");
     await client.query("CREATE INDEX IF NOT EXISTS idx_claude_sessions_project_id ON claude_sessions(project_id)");
     await client.query("CREATE INDEX IF NOT EXISTS idx_claude_sessions_last_message_at ON claude_sessions(last_message_at DESC)");
 

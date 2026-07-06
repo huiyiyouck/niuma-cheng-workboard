@@ -323,7 +323,7 @@ function ChiefOfStaffDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { data: sessionData, loading } = useSessionList({ projectId: "ecosystem-root", limit: 100 });
+  const { data: sessionData, loading, error: sessionError } = useSessionList({ projectId: "ecosystem-root", limit: 100 });
   const [selected, setSelected] = useState<string>(existingMapping?.sessionId ?? "");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -366,6 +366,7 @@ function ChiefOfStaffDialog({
           <SessionSelect
             sessions={sessionData?.items ?? []}
             loading={loading}
+            loadError={sessionError}
             value={selected}
             onChange={setSelected}
           />
@@ -881,7 +882,7 @@ function MappingDialog({
   const [err, setErr] = useState<string | null>(null);
 
   const role = ROLES.find((r) => r.id === defaultRole);
-  const { data: sessionData, loading: sessionLoading } = useSessionList({ projectId: project.id, limit: 100 });
+  const { data: sessionData, loading: sessionLoading, error: sessionError } = useSessionList({ projectId: project.id, limit: 100 });
 
   const handleSave = async () => {
     if (!selectedSessionId) return;
@@ -922,6 +923,7 @@ function MappingDialog({
           <SessionSelect
             sessions={sessionData?.items ?? []}
             loading={sessionLoading}
+            loadError={sessionError}
             value={selectedSessionId}
             onChange={setSelectedSessionId}
             highlightRole={defaultRole}
@@ -966,12 +968,14 @@ function MappingDialog({
 function SessionSelect({
   sessions,
   loading,
+  loadError,
   value,
   onChange,
   highlightRole,
 }: {
   sessions: ClaudeSession[];
   loading: boolean;
+  loadError?: string | null;
   value: string;
   onChange: (v: string) => void;
   highlightRole?: string;
@@ -1052,7 +1056,11 @@ function SessionSelect({
             )}
           </div>
           <div className="overflow-y-auto max-h-[300px]">
-            {filtered.length === 0 ? (
+            {loadError ? (
+              <p className="text-xs text-red-600 px-3 py-4 text-center">
+                会话数据加载失败（{loadError}）——请检查数据库连接（本地开发需 SSH 隧道在线）后重试
+              </p>
+            ) : filtered.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-4 text-center">
                 {loading ? "加载中..." : "无匹配会话"}
               </p>
@@ -1078,6 +1086,9 @@ function SessionSelect({
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground truncate">{s.title || "（无标题）"}</p>
                         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          {s.source === "codex" && (
+                            <span className="px-1 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 text-[10px]">Codex</span>
+                          )}
                           <span>{s.project_name}</span>
                           <span>·</span>
                           <span>{s.message_count} 条</span>

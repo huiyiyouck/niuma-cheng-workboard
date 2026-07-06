@@ -6,12 +6,16 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { withClient, ensureSchema } from "../db.js";
 import { extractTitle, detectRole } from "./session-meta.js";
+import { parseCodexLines, cwdToProjectId } from "./codex-parser.js";
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_CLAUDE_DIR = path.join(process.env.HOME || process.env.USERPROFILE || "", ".claude", "projects");
+const HOME = process.env.HOME || process.env.USERPROFILE || "";
+const DEFAULT_CLAUDE_DIR = path.join(HOME, ".claude", "projects");
+const DEFAULT_CODEX_DIR = path.join(HOME, ".codex", "sessions");
 // 远程机器（如生产服务器）会话的本地镜像根目录（IRC-002：双数据源会话同步）
 const REMOTE_MIRROR_ROOT = path.resolve(here, "../../..", "data", "remote-claude");
+const REMOTE_CODEX_MIRROR_ROOT = path.resolve(here, "../../..", "data", "remote-codex");
 
 export function parseRemoteSources(raw) {
   if (!raw || typeof raw !== "string") return [];
@@ -19,19 +23,40 @@ export function parseRemoteSources(raw) {
 }
 
 /**
- * 把远程机器的 ~/.claude/projects rsync 镜像到本地。
- * 单个远程失败不阻塞（保留上次镜像继续解析），结果随同步回执返回。
+ * 从 projects.config.json 收集允许入库的会话目录白名单（配置驱动原则）。
+ * 只有显式配置项目对应的目录（ecosystem + 各项目的 claude_project_id）才入库，
+ * 机器上其他项目的 Claude Code / Codex 会话一律不采集。
+ */
+export function collectAllowedProjectIds(config) {
+  const ids = new Set();
+  const add = (v) => {
+    if (v) for (const x of [].concat(v)) if (x) ids.add(x);
+  };
+  add(config?.ecosystem?.claude_project_id);
+  for (const p of config?.projects ?? []) add(p?.claude_project_id);
+  return ids;
+}
+
+/**
+ * 把远程机器的 ~/.claude/projects 和 ~/.codex/sessions rsync 镜像到本地。
+ * 单个远程/单个源失败不阻塞（保留上次镜像继续解析），结果随同步回执返回。
  */
 async function mirrorRemoteSources(sources) {
   const results = [];
+  const pulls = [
+    { kind: "claude", remotePath: ".claude/projects/", root: REMOTE_MIRROR_ROOT },
+    { kind: "codex", remotePath: ".codex/sessions/", root: REMOTE_CODEX_MIRROR_ROOT },
+  ];
   for (const src of sources) {
-    const dest = path.join(REMOTE_MIRROR_ROOT, src);
-    try {
-      await mkdir(dest, { recursive: true });
-      await execFileAsync("rsync", ["-az", "--delete", `${src}:.claude/projects/`, `${dest}/`], { timeout: 120000 });
-      results.push({ source: src, status: "ok", dir: dest });
-    } catch (err) {
-      results.push({ source: src, status: "error", error: String(err?.message || err), dir: dest });
+    for (const { kind, remotePath, root } of pulls) {
+      const dest = path.join(root, src);
+      try {
+        await mkdir(dest, { recursive: true });
+        await execFileAsync("rsync", ["-az", "--delete", `${src}:${remotePath}`, `${dest}/`], { timeout: 120000 });
+        results.push({ source: src, kind, status: "ok", dir: dest });
+      } catch (err) {
+        results.push({ source: src, kind, status: "error", error: String(err?.message || err), dir: dest });
+      }
     }
   }
   return results;
@@ -178,7 +203,7 @@ async function discoverJsonlFiles(projectPath) {
   }
 }
 
-async function syncJsonlFile(client, project, jsonlFile, { force = false } = {}) {
+async function syncJsonlFile(client, project, jsonlFile, { force = false, kind = "claude", allowedProjectIds = null } = {}) {
   const sessionId = hashId(jsonlFile.path);
   const now = new Date().toISOString();
 
@@ -230,32 +255,60 @@ async function syncJsonlFile(client, project, jsonlFile, { force = false } = {})
 
   const messages = [];
   let customTitle = null;
+  let sessionProject = project;
+
+  if (kind === "codex") {
+    const { meta, messages: parsed } = parseCodexLines(lines);
+    if (mode !== "incremental" && !cwdToProjectId(meta?.cwd)) {
+      return { sessionId, status: "error", error: "codex_session_meta_missing" };
+    }
+    if (meta?.cwd) {
+      const pid = cwdToProjectId(meta.cwd);
+      // 配置驱动：Codex 项目归属由 cwd 决定，不在白名单的目录不入库
+      if (allowedProjectIds && !allowedProjectIds.has(pid)) {
+        return { sessionId, status: "skipped-not-configured", projectId: pid };
+      }
+      sessionProject = { id: pid, name: pid };
+    }
+    for (const m of parsed) {
+      const createdAt = m.created_at ? new Date(m.created_at).toISOString() : now;
+      messages.push({
+        ...m,
+        // Codex 行没有 uuid，用内容哈希保证增量重放幂等
+        id: hashId(`${sessionId}-${createdAt}-${m.role}-${hashId(m.content)}`),
+        session_id: sessionId,
+        created_at: createdAt,
+      });
+    }
+  } else {
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (!obj) continue;
+        if (obj?.type === "custom-title" && typeof obj?.customTitle === "string") {
+          customTitle = obj.customTitle; // 一个会话可能多次改标题，取最后一条
+        }
+        if (obj?.type === "user" || obj?.type === "assistant") {
+          const msg = parseMessage(obj, sessionId);
+          if (msg) messages.push(msg);
+        }
+      } catch {}
+    }
+  }
+
   const userContents = [];
   let firstMsgAt = null;
   let lastMsgAt = null;
   let userCount = 0;
   let assistantCount = 0;
-
-  for (const line of lines) {
-    try {
-      const obj = JSON.parse(line);
-      if (!obj) continue;
-      if (obj?.type === "custom-title" && typeof obj?.customTitle === "string") {
-        customTitle = obj.customTitle; // 一个会话可能多次改标题，取最后一条
-      }
-      if (obj?.type === "user" || obj?.type === "assistant") {
-        const msg = parseMessage(obj, sessionId);
-        if (!msg) continue;
-        messages.push(msg);
-        if (msg.role === "user") {
-          userCount++;
-          if (msg.content.trim() && userContents.length < 5) userContents.push(msg.content);
-        }
-        if (msg.role === "assistant") assistantCount++;
-        if (!firstMsgAt || msg.created_at < firstMsgAt) firstMsgAt = msg.created_at;
-        if (!lastMsgAt || msg.created_at > lastMsgAt) lastMsgAt = msg.created_at;
-      }
-    } catch {}
+  for (const msg of messages) {
+    if (msg.role === "user") {
+      userCount++;
+      if (msg.content.trim() && userContents.length < 5) userContents.push(msg.content);
+    }
+    if (msg.role === "assistant") assistantCount++;
+    if (!firstMsgAt || msg.created_at < firstMsgAt) firstMsgAt = msg.created_at;
+    if (!lastMsgAt || msg.created_at > lastMsgAt) lastMsgAt = msg.created_at;
   }
 
   await client.query("BEGIN");
@@ -269,8 +322,8 @@ async function syncJsonlFile(client, project, jsonlFile, { force = false } = {})
         INSERT INTO claude_sessions
         (id, project_id, project_name, title, first_message_at, last_message_at,
          message_count, user_message_count, assistant_message_count,
-         jsonl_path, file_mtime, last_byte_pos, synced_at, detected_role, role_confidence)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         jsonl_path, file_mtime, last_byte_pos, synced_at, detected_role, role_confidence, source)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         ON CONFLICT (id) DO UPDATE SET
           project_id = EXCLUDED.project_id,
           project_name = EXCLUDED.project_name,
@@ -285,13 +338,15 @@ async function syncJsonlFile(client, project, jsonlFile, { force = false } = {})
           last_byte_pos = EXCLUDED.last_byte_pos,
           synced_at = EXCLUDED.synced_at,
           detected_role = EXCLUDED.detected_role,
-          role_confidence = EXCLUDED.role_confidence
+          role_confidence = EXCLUDED.role_confidence,
+          source = EXCLUDED.source
       `, [
-        sessionId, project.id, project.name, title,
+        sessionId, sessionProject.id, sessionProject.name, title,
         firstMsgAt || now, lastMsgAt || now,
         messages.length, userCount, assistantCount,
         jsonlFile.path, jsonlFile.mtime, data.length, now,
         detected.role, detected.confidence,
+        kind === "codex" ? "codex" : "claude-code",
       ]);
     } else {
       const current = await client.query(
@@ -358,14 +413,38 @@ async function syncJsonlFile(client, project, jsonlFile, { force = false } = {})
     throw err;
   }
 
-  return { sessionId, status: mode, messageCount: messages.length };
+  return { sessionId, status: mode, messageCount: messages.length, projectId: sessionProject.id };
 }
 
-export async function syncAllSessions({ claudeDir = DEFAULT_CLAUDE_DIR, force = false } = {}) {
+// Codex 会话文件按日期分层：~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl
+async function discoverCodexFiles(sessionsRoot) {
+  try {
+    const rels = await readdir(sessionsRoot, { recursive: true });
+    const files = [];
+    for (const rel of rels) {
+      const base = path.basename(rel);
+      if (!base.startsWith("rollout-") || !base.endsWith(".jsonl")) continue;
+      const fullPath = path.join(sessionsRoot, rel);
+      const st = await stat(fullPath);
+      files.push({ path: fullPath, name: base, size: st.size, mtime: st.mtime.toISOString() });
+    }
+    return files.sort((a, b) => b.size - a.size);
+  } catch {
+    return [];
+  }
+}
+
+export async function syncAllSessions({ claudeDir = DEFAULT_CLAUDE_DIR, force = false, allowedProjectIds = null } = {}) {
   await ensureSchema(); // 顺带加载 .env（CLAUDE_REMOTE_SOURCES）
   const remoteSources = await mirrorRemoteSources(parseRemoteSources(process.env.CLAUDE_REMOTE_SOURCES));
   // rsync 失败的远程也扫描其镜像目录（保留上次成功的数据；目录不存在时 discover 返回空）
-  const projects = await discoverProjectsAcross([claudeDir, ...remoteSources.map((r) => r.dir)]);
+  const claudeMirrors = remoteSources.filter((r) => r.kind === "claude").map((r) => r.dir);
+  const codexMirrors = remoteSources.filter((r) => r.kind === "codex").map((r) => r.dir);
+  let projects = await discoverProjectsAcross([claudeDir, ...claudeMirrors]);
+  // 配置驱动：只入库白名单内项目目录的会话（Claude Code 侧目录名即项目 id，发现阶段即可过滤）
+  if (allowedProjectIds) {
+    projects = projects.filter((p) => allowedProjectIds.has(p.id));
+  }
   const results = [];
   const now = new Date().toISOString();
 
@@ -380,6 +459,29 @@ export async function syncAllSessions({ claudeDir = DEFAULT_CLAUDE_DIR, force = 
           results.push({ projectId: project.id, projectName: project.name, status: "error", error: String(err?.message || err) });
         }
       }
+    }
+
+    // Codex 源（IRC-003）：项目归属由文件内 session_meta.cwd 决定，发现阶段无项目维度，白名单在文件内判定
+    const codexFallback = { id: "codex-unknown", name: "codex-unknown" };
+    for (const root of [DEFAULT_CODEX_DIR, ...codexMirrors]) {
+      const codexFiles = await discoverCodexFiles(root);
+      for (const file of codexFiles) {
+        try {
+          const r = await syncJsonlFile(client, codexFallback, file, { force, kind: "codex", allowedProjectIds });
+          results.push({ source: "codex", ...r });
+        } catch (err) {
+          results.push({ source: "codex", status: "error", error: String(err?.message || err) });
+        }
+      }
+    }
+
+    // 清理历史遗留：白名单外的会话（早期未过滤时误入库的目录）删除，messages 级联
+    if (allowedProjectIds && allowedProjectIds.size > 0) {
+      const del = await client.query(
+        "DELETE FROM claude_sessions WHERE project_id <> ALL($1)",
+        [[...allowedProjectIds]]
+      );
+      if (del.rowCount > 0) results.push({ cleanup: "removed-unconfigured", count: del.rowCount });
     }
   });
 

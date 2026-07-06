@@ -182,6 +182,7 @@ export interface ClaudeSession {
   synced_at: string;
   detected_role?: string | null;
   role_confidence?: number | null;
+  source?: string | null;
   mapping_id?: number | null;
   mapped_role?: string | null;
   last_messages?: SessionPreviewMessage[] | null;

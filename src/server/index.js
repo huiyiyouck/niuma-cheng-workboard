@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSnapshot } from "./snapshot.js";
 import { withClient, ensureSchema } from "./db.js";
-import { syncAllSessions, getSyncStatus } from "./sync/claude-sync.js";
+import { syncAllSessions, getSyncStatus, collectAllowedProjectIds } from "./sync/claude-sync.js";
 import { parseVersionList } from "./parsers/project-index.js";
 import { parseIterationRecord } from "./parsers/iteration-record.js";
 import { loadConfig, validateConfig } from "./config.js";
@@ -360,7 +360,11 @@ async function handleSync(req, res, url) {
   let body = {};
   try { body = await readJsonBody(req); } catch {}
   const force = body?.force === true || url.searchParams.get("force") === "1";
-  const result = await syncAllSessions({ force });
+  let allowedProjectIds = null;
+  try {
+    allowedProjectIds = collectAllowedProjectIds(await loadConfig(DEFAULT_CONFIG_PATH));
+  } catch {}
+  const result = await syncAllSessions({ force, allowedProjectIds });
   sendJson(res, 200, result);
 }
 
@@ -418,7 +422,8 @@ if (isMain) {
   });
 
   // 启动时后台触发一次全量会话同步（不阻塞服务启动；数据库不可达时只记录日志，不影响只读 API）
-  syncAllSessions()
+  loadConfig(DEFAULT_CONFIG_PATH)
+    .then((cfg) => syncAllSessions({ allowedProjectIds: collectAllowedProjectIds(cfg) }))
     .then((r) => {
       console.log(`启动同步完成：${r.projectCount} 个项目目录，共 ${r.results.length} 个会话文件`);
     })

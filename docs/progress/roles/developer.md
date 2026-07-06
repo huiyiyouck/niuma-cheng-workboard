@@ -1,5 +1,25 @@
 # Developer 角色日志
 
+## 2026-07-05 — v0.2 R1 验收第四批：隧道断连误报排查 + Codex 会话源支持（IRC-003）
+- 本次角色：Developer（开发工程师）
+- 动作：故障排查 ×1 + 实现阶段变更 ×1
+- 结论：「无匹配会话」是本地 SSH 隧道断连导致（数据未丢，重建隧道即恢复）；前端补数据库连接失败的显式错误提示；按 Owner 要求新增 Codex 会话源（只兼容 Claude Code + Codex 两种，不做通用适配层）
+- 故障①：上一会话进程退出把 `ssh -L 15432` 隧道带掉 → 后端连不上 PostgreSQL → 会话列表接口 500 → 前端静默显示「无匹配会话」误导 Owner。已重建隧道（加 ServerAliveInterval 保活）；SessionSelect 现在区分「加载失败（附原因+提示检查隧道）」与「真无会话」。**遗留建议**：本地隧道可用 autossh/launchd 保活，属开发环境配置，待 Owner 决定
+- 变更②（IRC-003，详见 v0.2-design.md 实现阶段变更记录）：
+  - Codex 会话 `~/.codex/sessions/**/rollout-*.jsonl`（Mac 39 + 服务器 44）入库；`session_meta.cwd` 转项目目录名与 Claude Code 同构，配置零改动
+  - 新增 `codex-parser.js`（TDD 4 用例）+ `claude_sessions.source` 列 + 前端 Codex 徽章
+  - 补齐 config：ai/coordination 项目补 Mac 侧 `claude_project_id` 目录（此前只有服务器目录，Mac 上的 Codex/Claude 会话过滤不到）
+  - 顺带修：coordination 脆弱测试期望值跟随真源更新（BCR 10→11，按测试自身注释约定）
+- 故障③（同步期锁竞争）：`ensureSchema` 每请求重跑 DDL（含新增的 `ALTER TABLE ADD COLUMN source`），与同步大事务抢 `ACCESS EXCLUSIVE` 锁，导致全量同步进行时所有 HTTP 请求超时（snapshot/sessions 全 000）。修：`ensureSchema` 改为进程内只跑一次（缓存 promise，失败不缓存），DDL 不再随请求反复触发。验证：同步进行中 snapshot 稳定 200 亚秒响应
+- 变更④（配置驱动过滤，Owner 明确「只有对应项目下面的对话才入库」）：早期实现把机器上所有目录全入库（Downloads/知识库/无关项目都进来了），违背项目「配置驱动、不自动扫描接入」原则。修：新增 `collectAllowedProjectIds`（从 config 展平 ecosystem + 各项目 claude_project_id 白名单）；Claude 侧发现阶段按目录过滤，Codex 侧按 cwd 转出 id 过滤，同步顺带 `DELETE <> ALL` 清理历史误入库。实测 194→116（清 78 个白名单外会话，残留 0）
+- 变更④补正（Owner 二次强调「只加载当前项目目录」）：逐项目核对发现 xiaobao 白名单多塞了 `-root-Project-niuma-cheng-xiaobao-server`（服务器后端独立部署目录，非 xiaobao 项目目录，是我先前手工猜测塞的），已去掉并清理该目录 1 条会话。修正后每个项目严格只匹配「本机项目目录 + 服务器同名项目目录」两个，无衍生/无关目录
+- 隧道保活：本地 `ssh -L 15432` 反复被进程退出带断，改用 `setsid nohup ssh ... ServerAliveInterval=20 ExitOnForwardFailure=yes`（独立进程组，不随会话/服务 kill 带走）
+- 验证：测试 75/75 通过；5 项目逐目录核对——workflow/xiaobao/ai/coordination/workboard 各只加载本机+服务器同名项目目录，Claude+Codex 混合，白名单外零残留
+- 关联迭代：v0.2
+- 关联 Change Note：IRC-003
+- 下一步入口：Owner 继续验收 → 修完进 Review
+- 收尾状态：未收尾
+
 ## 2026-07-05 — v0.2 实现阶段 R1 完成 + Owner 验收 Bug 修复全量
 - 本次角色：Developer（开发工程师）
 - 动作：实现（v0.2 R1 全量）+ Bugfix（Owner 验收多轮修复）

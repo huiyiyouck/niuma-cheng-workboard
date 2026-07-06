@@ -24,7 +24,7 @@
       "kind": "business",
       "enabled": true,
       "url": "https://news.huiyiyou.cloud",
-      "claude_project_id": ["-Users-ck-Project-niuma-cheng-niuma-cheng-xiaobao", "-root-Project-niuma-cheng-xiaobao", "-root-Project-niuma-cheng-xiaobao-server"]
+      "claude_project_id": ["-Users-ck-Project-niuma-cheng-niuma-cheng-xiaobao", "-root-Project-niuma-cheng-xiaobao"]
     },
     {
       "id": "ai",
@@ -32,7 +32,7 @@
       "path": "../niuma-cheng-ai",
       "kind": "business",
       "enabled": true,
-      "claude_project_id": ["-root-Project-niuma-cheng-ai"]
+      "claude_project_id": ["-Users-ck-Project-niuma-cheng-niuma-cheng-ai", "-root-Project-niuma-cheng-ai"]
     },
     {
       "id": "coordination",
@@ -40,7 +40,7 @@
       "path": "../niuma-cheng-coordination",
       "kind": "coordination",
       "enabled": true,
-      "claude_project_id": ["-root-Project-niuma-cheng-coordination"]
+      "claude_project_id": ["-Users-ck-Project-niuma-cheng-niuma-cheng-coordination", "-root-Project-niuma-cheng-coordination"]
     },
     {
       "id": "workboard",
