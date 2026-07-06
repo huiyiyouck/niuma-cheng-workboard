@@ -3,11 +3,36 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseProjectIndex, isTodoDone } from "./project-index.js";
+import { parseProjectIndex, isTodoDone, parseVersionList } from "./project-index.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(here, "../../..");
 const REAL_INDEX = path.join(PROJECT_ROOT, "docs", "progress", "INDEX.md");
+
+test("parseVersionList：版本按语义号升序，不受表格书写顺序影响（ai 倒序表格 → 正序）", () => {
+  const md = `## 版本列表
+| 版本 | 状态 |
+|------|------|
+| v0.2 | 进行中 |
+| v0.1 | 已关闭 |
+`;
+  const r = parseVersionList(md);
+  assert.deepEqual(r.versions.map((v) => v.version), ["v0.1", "v0.2"]);
+});
+
+test("parseVersionList：语义排序正确处理多段/多位版本号（v0.6.1 在 v0.6 后、v0.10 在 v0.9 后）", () => {
+  const md = `## 版本列表
+| 版本 | 状态 |
+|------|------|
+| v0.10 | 规划中 |
+| v0.6.1 | 进行中 |
+| v0.6 | 已完成 |
+| v0.9 | 已完成 |
+| v0.2 | 已完成 |
+`;
+  const r = parseVersionList(md);
+  assert.deepEqual(r.versions.map((v) => v.version), ["v0.2", "v0.6", "v0.6.1", "v0.9", "v0.10"]);
+});
 
 test("isTodoDone：完成标记命中，未完成不误判", () => {
   assert.equal(isTodoDone("✅ 已完成并部署"), true);

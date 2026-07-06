@@ -38,6 +38,21 @@ function normalizeStatus(text) {
   return "unknown";
 }
 
+// 语义版本比较：vX.Y[.Z...] 拆成数字段逐段比较（非数字段按 0），保证 v0.6.1 排在 v0.6 后、v0.10 排在 v0.9 后。
+function compareVersions(a, b) {
+  const key = (v) => String(v).trim().replace(/^v/i, "").split(".").map((x) => {
+    const n = parseInt(x, 10);
+    return Number.isNaN(n) ? 0 : n;
+  });
+  const ka = key(a), kb = key(b);
+  const len = Math.max(ka.length, kb.length);
+  for (let i = 0; i < len; i++) {
+    const d = (ka[i] ?? 0) - (kb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
 export function parseVersionList(markdown, { sourcePath = null } = {}) {
   const errors = [];
   const section = findSection(markdown, "## 版本列表");
@@ -65,6 +80,9 @@ export function parseVersionList(markdown, { sourcePath = null } = {}) {
     status: hasStatus ? normalizeStatus(r["状态"]) : "unknown",
     releaseDate: r["发布时间"]?.trim() || r["发布日期"]?.trim() || null,
   })).filter((v) => v.version);
+  // 各项目 INDEX.md 版本表书写顺序不统一（xiaobao 正序 / ai 倒序），此处按语义版本号统一升序，
+  // 保证时间轴等消费者拿到一致的正序（v0.1 → v0.6.1 → v0.10）。
+  versions.sort((a, b) => compareVersions(a.version, b.version));
   return { versions, errors };
 }
 
