@@ -1,5 +1,17 @@
 # Architect 角色日志
 
+## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2-2 Architect Review）
+- 本次角色：Architect（架构师）
+- 动作：实现阶段 Review（最终复核）
+- 涉及文档：`src/server/config.js`、`src/server/db.js`、`projects.config.json`、`src/server/parsers/project-index.test.js`、`docs/progress/iterations/v0.2.md`、`docs/progress/INDEX.md`
+- 结论：完成 v0.2 实现阶段 R2-2 Architect Review。结论为**✅ 通过**。3 项高严重度阻塞问题已全部修正：① `src/server/config.js` 第 94-97 行新增 `ecosystem.root_session_id` 存在性校验，存在则抛 `ConfigLoadError`；② `projects.config.json` 已删除 `root_session_id` 字段；③ `src/server/db.js` 的 `session_mappings` 表已添加 `UNIQUE(project_id, role)` 约束（含存量表兼容补齐）。复跑 `npm test` 结果为 79/79 通过，同步修复了 `project-index.test.js` 中断言（`blocked` 从阻塞项字符串改回 `null`）。中严重度问题 M-1~M-5 仍需后续补齐，但不阻塞 Architect Review 通过。
+- 关联迭代：v0.2（Architect R2-2 ✅ 通过；DevOps R2 ❌ 不通过，DH-1/DH-2 待修正）
+- 关联非迭代工作：无
+- 关联 Change Note：IRC-001/002/003 已落地但未归档独立文件
+- 遗留问题/风险：① M-1~M-5 建议在部署就绪检查前补齐；② DevOps R2 提出的 DH-1（无 `.env.example`）和 DH-2（无版本化迁移机制）仍需 Developer/DevOps 协同处理。
+- 下一步入口：Developer 修正 DH-1/DH-2 → DevOps 复核 → 通过后进入部署就绪检查。
+- 收尾状态：未收尾
+
 ## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2-1 Architect 复核）
 - 本次角色：Architect（架构师）
 - 动作：实现阶段复核 Review

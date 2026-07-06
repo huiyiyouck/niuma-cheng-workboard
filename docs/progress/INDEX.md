@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.2
 - 当前模式：标准迭代
-- 当前阶段：实现（R2-1 Review中——Developer 自审 + 自测完成；Architect 复核 ❌ 不通过，3 项高严重度问题仍待修正）
-- 阻塞项：H-1 config.js 未实现 v0.2 配置校验；H-2 projects.config.json 仍保留 root_session_id；H-3 session_mappings 缺少 (project_id, role) 唯一约束
-- 下一步入口：Developer 修正 3 项高严重度问题 → Architect 复核 → 通过后进入部署就绪检查
+- 当前阶段：实现（R2-2 Architect/DevOps Review 均 ✅ 通过，等待部署就绪检查）
+- 阻塞项：无
+- 下一步入口：DevOps 执行部署就绪检查 → Owner 验收 → 迭代关闭检查
 
 ## 版本列表
 
@@ -33,7 +33,7 @@
 |------|------|------|------|--------|
 | 2026-07-05 | 技术预研 / Spike | [多来源会话同步调研（Codex / Trae CN）](ad-hoc/2026-07-05-spike-multi-source-session-sync.md) | 已完成 | Owner 拍板 Codex 同步排期（v0.3 或并入 v0.2）；Trae CN 挂起 |
 | 2026-07-04 | 产品定位 / Product Brief | v0.2 UI 方案草案（项目会话视图 + 角色卡片 + 映射配置） | 已定稿 | — |
-| 2026-07-06 | 标准迭代 v0.2 | 实现阶段 R2-1 Architect 复核（npm test 78/78 通过；H-1~H-3 仍未修正） | Review中（Architect 复核 ❌ 不通过，3 项高严重度问题仍待修正） | Developer 修正 H-1~H-3 → Architect 复核 |
+| 2026-07-06 | 标准迭代 v0.2 | 实现阶段 R2-2 Architect Review（npm test 79/79 通过；H-1~H-3 已修正） | Architect ✅ 通过；DevOps ❌ 不通过（DH-1/DH-2 待修正） | Developer 修正 DH-1/DH-2 → DevOps 复核 |
 | 2026-06-17 | 立项 / Positioning | [跨项目 Agent 工作看板立项定位](ad-hoc/2026-06-17-workboard-positioning.md) / [Review 记录](ad-hoc/2026-06-17-workboard-positioning-review.md) | 已定稿，Owner Review 1-16 全部确认 | Developer 基于定稿方案实现第一版只读看板 |
 
 ## 最近收尾摘要
