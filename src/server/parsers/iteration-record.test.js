@@ -44,7 +44,8 @@ test("Review 结果同样取最后一行", () => {
 
 test("阶段状态映射覆盖设计 2.4 全部变体：✅ → finalized、待修正 → blocked", () => {
   const r = parseIterationRecord(MULTI_ROUND, { version: "v0.6" });
-  const testing = r.stages.find((s) => s.id === "testing");
+  // 测试阶段已降级为附加记录（id 非 "testing"），按名字找；状态解析与 standard 无关，✅ 仍 → finalized
+  const testing = r.stages.find((s) => s.name.includes("测试"));
   assert.equal(testing.status, "finalized");
   const deploy = r.stages.find((s) => s.id === "deploy_check");
   assert.equal(deploy.status, "blocked");
@@ -173,9 +174,38 @@ test("非标准标题降级为附加记录：standard=false、不计入统计、
   assert.equal(r.currentStage, null);
 });
 
-test("完成计数按修正后的状态统计", () => {
+test("完成计数按修正后的状态统计（测试阶段并入实现，不计入标准流水线）", () => {
   const r = parseIterationRecord(MULTI_ROUND, { version: "v0.6" });
-  // PRD 已定稿 + 设计已定稿 + 测试 ✅ = 3 个完成
-  assert.equal(r.summary.completedCount, 3);
+  // PRD 已定稿 + 设计已定稿 = 2 个完成（测试阶段 BCR-006 已并入实现，属附加记录不计入）
+  assert.equal(r.summary.completedCount, 2);
   assert.equal(r.summary.blockedStage, "部署就绪检查");
+});
+
+test("测试阶段 / UI 方案阶段降级为附加记录（BCR-004/006 已并入 PRD/实现，非当前标准阶段）", () => {
+  const md = `## 阶段门禁
+
+### 实现阶段
+| 轮次 | 阶段状态 |
+|------|----------|
+| R1 | 已定稿 |
+
+### 测试阶段
+| 轮次 | 阶段状态 |
+|------|----------|
+| R1 | 已跳过 |
+
+### UI 方案阶段
+| 轮次 | 阶段状态 |
+|------|----------|
+| R1 | 已定稿 |
+`;
+  const r = parseIterationRecord(md, { version: "v0.6" });
+  const impl = r.stages.find((s) => s.name.includes("实现"));
+  const testing = r.stages.find((s) => s.name.includes("测试"));
+  const ui = r.stages.find((s) => s.name.includes("UI"));
+  assert.equal(impl.standard, true);
+  assert.equal(testing.standard, false);   // 附加记录
+  assert.equal(ui.standard, false);        // 附加记录
+  // 标准流水线只算实现（1/1），测试/UI 不计入
+  assert.equal(r.summary.totalStages, 1);
 });

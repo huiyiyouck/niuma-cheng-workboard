@@ -50,7 +50,7 @@ test("解析真实本项目 INDEX.md：当前状态 + 未完成待办", async ()
   // 注：本用例读取真实 INDEX.md（随迭代推进而变化），断言需跟随当前实际状态同步更新
   assert.equal(result.iteration, "v0.2");
   assert.equal(result.mode, "标准迭代");
-  assert.equal(result.blocked, "无（H-1~H-3 已修正）"); // 当前无阻塞项，说明原因
+  assert.equal(result.blocked, null); // INDEX 当前「阻塞项：无」→ null（H-1~H-3 已修正、v0.2 已部署）
   assert.ok(result.phase && result.phase.length > 0);
   // 跨任务待办：3 条 v0.3 方向（会话迭代标签、菜单精简 5→3、PG 版本化迁移 DH-2）
   assert.equal(result.todos.length, 3);

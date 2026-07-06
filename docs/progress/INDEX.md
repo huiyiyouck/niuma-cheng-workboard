@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.2
 - 当前模式：标准迭代
-- 当前阶段：实现（R2-2 Architect/DevOps Review 均 ✅ 通过，等待部署就绪检查）
+- 当前阶段：部署（v0.2 生产部署 ✅ 完成，等待 Owner 验收）
 - 阻塞项：无
-- 下一步入口：DevOps 执行部署就绪检查 → Owner 验收 → 迭代关闭检查
+- 下一步入口：Owner 实测生产环境 `https://workboard.huiyiyou.cloud` → 通过后执行迭代关闭检查
 
 ## 版本列表
 
