@@ -91,6 +91,10 @@ export function validateConfig(raw, { configPath, env = process.env }) {
   if (!Array.isArray(raw.projects) || raw.projects.length === 0) {
     throw new ConfigLoadError(`projects 必须是非空数组: ${configPath}`);
   }
+  // v0.2 §6.1 迁移护栏：ecosystem.root_session_id 已废弃，存在则报错退出，强制手动删除
+  if (raw.ecosystem && Object.prototype.hasOwnProperty.call(raw.ecosystem, "root_session_id")) {
+    throw new ConfigLoadError(`ecosystem.root_session_id 已废弃（v0.2 §6.1），请从 ${configPath} 删除该字段`);
+  }
 
   const configDir = path.dirname(configPath);
   const intervalRaw = raw?.refresh?.interval_seconds;

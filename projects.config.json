@@ -2,7 +2,6 @@
   "ecosystem": {
     "name": "niuma-cheng 生态",
     "root_path": "..",
-    "root_session_id": null,
     "claude_project_id": ["-Users-ck-Project-niuma-cheng", "-root-Project"]
   },
   "refresh": {

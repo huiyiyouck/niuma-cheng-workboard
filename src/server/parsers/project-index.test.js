@@ -50,7 +50,10 @@ test("解析真实本项目 INDEX.md：当前状态 + 未完成待办", async ()
   // 注：本用例读取真实 INDEX.md（随迭代推进而变化），断言需跟随当前实际状态同步更新
   assert.equal(result.iteration, "v0.2");
   assert.equal(result.mode, "标准迭代");
-  assert.equal(result.blocked, null); // 「无」→ null
+  assert.equal(
+    result.blocked,
+    "H-1 config.js 未实现 v0.2 配置校验；H-2 projects.config.json 仍保留 root_session_id；H-3 session_mappings 缺少 (project_id, role) 唯一约束",
+  ); // 与 INDEX.md 当前阻塞项保持一致
   assert.ok(result.phase && result.phase.length > 0);
   // 跨任务待办：2 条 v0.3 方向（会话迭代标签、菜单精简 5→3），均归属 PM 待研究
   assert.equal(result.todos.length, 2);

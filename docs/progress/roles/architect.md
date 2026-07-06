@@ -1,16 +1,30 @@
 # Architect 角色日志
 
-## 2026-07-05 — 会话摘要（v0.2 设计文档 R1 修正）
-- 本次角色：Architect
-- 动作：设计阶段 R1 修正
-- 涉及文档：`docs/progress/iterations/v0.2-design.md`、`docs/progress/iterations/v0.2.md`、`docs/progress/INDEX.md`
-- 结论：① 完成 R1 Review 问题修正：PM 通过（2 中严重度建议），Developer 补充复审发现 1 高 + 3 中严重度问题（DR-1~DR-4），共 5 项中高问题全部修正。② **DR-1（高严重度）**：§2.4 时间轴第二层解析策略三重不匹配——已修正为「定位 `## 阶段门禁` → 遍历三级标题提取阶段名 → 每个三级标题下第一个表格按列名匹配「阶段状态」列」，补充阶段映射表（9 个阶段含测试/UI 变体）和未知阶段兜底。③ **DR-2（中）**：补充阶段状态中文→枚举映射表（已定稿/finalized、Review中/in_progress、未开始/not_started、阻塞/blocked）。④ **DR-4（中）**：阶段映射表扩展为 9 个阶段 + 未知阶段兜底。⑤ **DR-3 + P-2（中）**：新增 `POST /api/sync` 接口，对话视图刷新按钮调用此接口触发增量同步。⑥ **P-1（中）**：新增 `DELETE /api/mappings` 接口支持取消映射。⑦ Developer R2 复审通过，仅发现 R2-1 中低严重度文档一致性问题（§4.6 流程描述未同步更新），已顺手修正。⑧ 设计阶段已定稿，等待 Developer 进入实现阶段。
-- 关联迭代：v0.2（设计已定稿，待实现）
+## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2-1 Architect 复核）
+- 本次角色：Architect（架构师）
+- 动作：实现阶段复核 Review
+- 涉及文档：`src/server/config.js`、`src/server/db.js`、`projects.config.json`、`src/server/parsers/project-index.test.js`、`docs/progress/iterations/v0.2.md`、`docs/progress/INDEX.md`
+- 结论：完成 v0.2 实现阶段 R2-1 Architect 复核。结论为**❌ 不通过（维持 R2 结论）**。Developer 尚未提交针对 H-1~H-3 的代码修正：① `src/server/config.js` 仍未扩展 `PROJECT_KINDS`、未校验 `level`、未禁止 `ecosystem.root_session_id`；② `projects.config.json` 第 5 行仍保留 `ecosystem.root_session_id: null`；③ `src/server/db.js` 的 `session_mappings` 表仍未添加 `UNIQUE(project_id, role)`。复跑 `npm test` 结果为 78/78 通过（已同步更新 `project-index.test.js` 中断言以匹配当前 INDEX.md 阻塞项）。
+- 关联迭代：v0.2（实现 R2 Review中，3 项高严重度问题仍待修正）
 - 关联非迭代工作：无
-- 关联 Change Note：无
-- 遗留问题/风险：① 时间轴解析的产出摘要提取规则需实现阶段用真实 vX.Y.md 验证；② 生产数据源同步脚本由 DevOps 在部署阶段落地，后端只读取 `sync-status.json`；③ 环境变量 `CLAUDE_HOME`（默认 `~/.claude/`）和 `WORKBOARD_DB_PATH`（默认 `data/workboard.db`）需在部署配置中设置。
-- 下一步入口：Developer 复审设计文档 → 通过后进入实现阶段。
+- 关联 Change Note：IRC-001/002/003 已落地但未归档独立文件
+- 遗留问题/风险：① H-1~H-3 必须修正后才能进入部署就绪检查；② `project-index.test.js` 断言需在修正阻塞项时同步更新；③ M-1~M-5 建议同一轮补齐；④ DevOps R2 提出的 DH-1/DH-2 仍需 Developer/DevOps 协同处理。
+- 下一步入口：Developer 修正 H-1~H-3 + 同步修复 `project-index.test.js` 断言 → Architect 复核。
 - 收尾状态：未收尾
+
+## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2 Review）
+- 本次角色：Architect
+- 动作：实现阶段 Review
+- 涉及文档：`src/server/config.js`、`src/server/db.js`、`src/server/index.js`、`src/server/sync/claude-sync.js`、`src/server/parsers/iteration-record.js`、`frontend/src/app/components/EcosystemView.tsx`、`frontend/src/app/useProjectSession.ts`、`frontend/package.json`、`projects.config.json`、`docs/progress/iterations/v0.2.md`、`docs/progress/INDEX.md`
+- 结论：完成 v0.2 实现阶段 R2 Architect Review。结论为**❌ 不通过**。实现功能完整、测试 76/76 通过、IRC-001/002/003 已落地，但存在 3 项高严重度阻塞问题：① `src/server/config.js` 未实现 v0.2 配置校验（`level` 字段、新增 `kind` 枚举、`ecosystem.root_session_id` 禁止存在）；② `projects.config.json` 仍保留 `ecosystem.root_session_id: null`，违反设计文档 §6.1 迁移要求；③ `session_mappings` 表缺少 `(project_id, role)` 唯一约束，违反设计文档 §2.2 业务规则。另有多项中严重度问题（前端 Markdown 渲染缺失、API 路径与设计文档不一致、`ecosystem.root_path` 未使用、IRC 未走独立 Change Note、`session_title` 冗余字段缺失）。IRC-001/002/003 已确认可接受（Owner 已批准，design.md 已记录）。时间轴解析器、会话同步引擎、白名单过滤等核心实现与设计一致。
+- 关联迭代：v0.2（实现 R2 Review中，3 项高严重度问题待修正）
+- 关联非迭代工作：无
+- 关联 Change Note：IRC-001/002/003 已落地但未归档独立文件
+- 遗留问题/风险：① H-1~H-3 必须修正后才能进入部署就绪检查；② M-1~M-5 可在同一轮或后续补齐；③ 生产数据源同步脚本仍由 DevOps 在部署阶段落地，后端只读取 `sync-status.json`。
+- 下一步入口：Developer 修正 H-1~H-3 → Architect 复核。
+- 收尾状态：未收尾
+
+## 2026-07-05 — 会话摘要（v0.2 设计文档 R1 修正）
 
 ## 2026-07-05 — 会话摘要（v0.2 PRD R2 Review + Spike-001 验证）
 - 本次角色：Architect（架构师）

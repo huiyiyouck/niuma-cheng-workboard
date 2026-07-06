@@ -284,28 +284,20 @@ async function handleCreateMapping(req, res) {
 
     const now = new Date().toISOString();
 
-    // 以 (project_id, role) 为业务唯一键：每个项目+角色只能映射到一个会话
-    // 重新配置时更新现有映射，而不是新增
-    const existing = await client.query(
-      "SELECT id FROM session_mappings WHERE project_id = $1 AND role = $2",
-      [project_id, role]
+    // 以 (project_id, role) 为业务唯一键：每个项目+角色只能映射一个会话。
+    // 原子 upsert（ON CONFLICT），避免 SELECT-then-INSERT 并发下产生重复行（H-3）。
+    const upsert = await client.query(
+      `INSERT INTO session_mappings (session_id, project_id, role, note, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $5)
+       ON CONFLICT (project_id, role) DO UPDATE SET
+         session_id = EXCLUDED.session_id,
+         note = EXCLUDED.note,
+         updated_at = EXCLUDED.updated_at
+       RETURNING *, (xmax = 0) AS inserted`,
+      [session_id, project_id, role, note || null, now]
     );
-
-    if (existing.rows.length > 0) {
-      await client.query(
-        `UPDATE session_mappings SET session_id = $1, note = $2, updated_at = $3 WHERE id = $4`,
-        [session_id, note || null, now, existing.rows[0].id]
-      );
-      const updated = await client.query("SELECT * FROM session_mappings WHERE id = $1", [existing.rows[0].id]);
-      sendJson(res, 200, updated.rows[0]);
-    } else {
-      const insertRes = await client.query(
-        `INSERT INTO session_mappings (session_id, project_id, role, note, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [session_id, project_id, role, note || null, now, now]
-      );
-      sendJson(res, 201, insertRes.rows[0]);
-    }
+    const row = upsert.rows[0];
+    sendJson(res, row.inserted ? 201 : 200, row);
   });
 }
 

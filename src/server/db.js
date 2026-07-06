@@ -129,8 +129,17 @@ async function runSchemaDDL() {
         role TEXT NOT NULL,
         note TEXT,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        UNIQUE (project_id, role)
       )
+    `);
+    // 设计 §2.2 业务唯一键：每个项目的每个角色只能映射一个会话（存量表用 ADD CONSTRAINT 兼容补齐）
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'session_mappings_project_id_role_key') THEN
+          ALTER TABLE session_mappings ADD CONSTRAINT session_mappings_project_id_role_key UNIQUE (project_id, role);
+        END IF;
+      END $$;
     `);
     await client.query("CREATE INDEX IF NOT EXISTS idx_session_mappings_project_id ON session_mappings(project_id)");
     await client.query("CREATE INDEX IF NOT EXISTS idx_session_mappings_role ON session_mappings(role)");

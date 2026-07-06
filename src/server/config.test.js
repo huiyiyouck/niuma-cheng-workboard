@@ -44,6 +44,14 @@ test("validateConfig 整批失败：空 projects / 非数组 / 根非对象", ()
   assert.throws(() => validateConfig([], { configPath: CONFIG_PATH }), ConfigLoadError);
 });
 
+test("validateConfig 存在已废弃的 ecosystem.root_session_id → 报错退出（设计 §6.1 迁移护栏）", () => {
+  const raw = { ecosystem: { name: "x", root_path: "..", root_session_id: null }, projects: [{ id: "a", name: "A", path: ".", kind: "workboard" }] };
+  assert.throws(() => validateConfig(raw, { configPath: CONFIG_PATH }), ConfigLoadError);
+  // 无该字段则正常
+  const ok = { ecosystem: { name: "x", root_path: ".." }, projects: [{ id: "a", name: "A", path: ".", kind: "workboard" }] };
+  assert.doesNotThrow(() => validateConfig(ok, { configPath: CONFIG_PATH }));
+});
+
 test("validateConfig 配置级降级：重复 id 仅标该项，不整批失败", () => {
   const raw = {
     projects: [
