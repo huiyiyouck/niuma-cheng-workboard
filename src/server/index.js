@@ -118,6 +118,10 @@ export function createServer({ configPath = DEFAULT_CONFIG_PATH, distDir = DEFAU
         return await handleSync(req, res, url);
       }
 
+      if (url.pathname === "/api/health" && method === "GET") {
+        return await handleHealth(res);
+      }
+
       if (url.pathname.startsWith("/api/")) {
         return sendJson(res, 404, { error: `未知 API: ${url.pathname}` });
       }
@@ -346,6 +350,22 @@ async function handleTimelineDetail(res, url, configPath) {
   const md = await readFile(recordPath, "utf8");
   const result = parseIterationRecord(md, { sourcePath: recordPath, version });
   sendJson(res, 200, result);
+}
+
+// 健康检查（DM-5）：db 可达返回 200，不可达返回 503，供 systemd/nginx 存活探测与部署回滚判断。
+async function handleHealth(res) {
+  let version = "unknown";
+  try {
+    const pkg = JSON.parse(await readFile(path.join(PROJECT_ROOT, "package.json"), "utf8"));
+    version = pkg.version ?? "unknown";
+  } catch {}
+  let db = "ok";
+  try {
+    await withClient((client) => client.query("SELECT 1"));
+  } catch {
+    db = "error";
+  }
+  sendJson(res, db === "ok" ? 200 : 503, { status: db === "ok" ? "ok" : "degraded", db, version });
 }
 
 async function handleSync(req, res, url) {
