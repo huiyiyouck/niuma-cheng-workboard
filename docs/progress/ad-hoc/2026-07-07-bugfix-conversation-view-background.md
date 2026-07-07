@@ -2,7 +2,7 @@
 
 - 模式：Bugfix / UI 显示问题
 - 执行角色：Developer
-- 状态：✅ 已完成
+- 状态：✅ 已部署生产（2026-07-07 DevOps）
 - 触发：
   1. Owner 反馈项目会话里“查看对话”的背景颜色与周围白色背景一致，缺少层级区分；聊天气泡本身已有左右区分。
   2. Owner 反馈点击“同步会话”后感觉没有同步。
@@ -53,7 +53,27 @@
   2. `project-index.test.js` 真实本项目 `INDEX.md` 待办数因现存文档变更从 2 变 3。
   均非本次同步刷新/背景样式改动引入。
 
+## 生产部署（DevOps，2026-07-07）
+
+- 部署 commit：`3d77d8ce155164956340c723a06ef7abcd193bd8`（`origin/main` 同步）。
+- 前端构建：`npm --prefix frontend run build` 通过，生产入口命中 `index-BWMQooTp.js` / `index-tJaKjMQO.css`。
+- 针对性后端测试：`node --test src/server/sync/claude-sync.test.js src/server/sync/codex-parser.test.js src/server/sync/session-meta.test.js` 通过（3/3）。
+- 全量 `npm test`：78/80 通过；失败项仍为上文已知真实数据耦合假失败，不阻塞发布。
+- 生产部署动作：复制 `src/server/.`、`package.json`、`frontend/dist/.` 到 `/opt/workboard-prod/app`；复制 `frontend/dist/.` 到 `/var/www/workboard.huiyiyou.cloud`；重启 `workboard-api-prod`。
+- 生产健康：`workboard-api-prod` active；`http://127.0.0.1:5181/api/health` 与 `https://115.191.43.79/api/health` 均返回 `{"status":"ok","db":"ok","migrations":"ok","version":"0.2.0"}`。
+- 同步回归：`POST http://127.0.0.1:5181/api/sync` 成功，返回当前 Codex 会话增量同步；`GET /api/snapshot` 返回 `syncStatus.status=synced`、`sessionCount=207`。
+- 入口检查：`https://115.191.43.79/` 返回新前端产物；`http://115.191.43.79/` 301 到 HTTPS；`:8088` 仍连接拒绝，符合停用非标端口方案。
+
+## 二次重新部署（DevOps，2026-07-07）
+
+- 部署 commit：`66a57abc5853471350cb5e3734dc469b4cf655fd`（三层背景二次修正，`HEAD` = `@{u}`）。
+- 前端构建：`npm --prefix frontend run build` 通过，产物为 `index-GHNacrce.js` / `index-DkTN59Sp.css`。
+- 生产部署动作：复制 `frontend/dist/.` 到 `/var/www/workboard.huiyiyou.cloud/`；同步复制到 `/opt/workboard-prod/app/frontend/dist/`。本次仅前端静态资源变更，未重启后端。
+- 生产文件校验：`/var/www/workboard.huiyiyou.cloud/index.html` 与 `/opt/workboard-prod/app/frontend/dist/index.html` 均引用 `index-GHNacrce.js` / `index-DkTN59Sp.css`。
+- 生产健康：`http://127.0.0.1:5181/api/health`、`https://127.0.0.1/api/health`、`https://115.191.43.79/api/health` 均返回 `{"status":"ok","db":"ok","migrations":"ok","version":"0.2.0"}`（curl 校验时需去掉代理环境）。
+- 入口检查：`https://115.191.43.79/` 返回新前端产物 `index-GHNacrce.js` / `index-DkTN59Sp.css`；`http://115.191.43.79/` 301 到 HTTPS。
+
 ## 后续
 
 - 无需升级标准迭代。
-- 本次代码尚未部署生产；若 Owner 要求立即上线，切换 DevOps 执行生产构建/发布与线上回归。
+- 待 Owner 从真实网络验收 `https://115.191.43.79` 的对话查看器背景层级与手动同步后列表/详情刷新体验。

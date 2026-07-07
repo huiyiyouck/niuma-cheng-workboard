@@ -142,6 +142,13 @@ certbot certonly --authenticator dns-aliyun \
 
 ## 8. 生产部署记录
 
+> **2026-07-07 更新（当前生产入口方案，优先级高于下方历史）**：Owner 要求 IP 直连（无端口）访问生产、IP 只指生产、其余仅域名。当前布局：
+> - 生产站点 `workboard.huiyiyou.cloud` 持有 `listen 443 ssl default_server` + `server_name ... 115.191.43.79` → `https://115.191.43.79`（IP:443）直达生产 v0.2（反代 5181）。
+> - IP:80 default（`test.huiyiyou.cloud` 文件内）改为 `return 301 https://$host$request_uri`；生产站点已删除 `listen 8088`；`workboard-test` 让出 443 default、仅域名可达。
+> - ⚠️ 与 §2 网络约束存在张力：公司网络曾拦 80/443，本方案须 Owner 从公司网络实测 `https://115.191.43.79`，被拦则回滚恢复 8088（回滚 diff 见 ad-hoc）。
+> - 开发目录首次部署前须 `npm install`（根目录后端依赖 `pg` 等，v0.2 引入）；复制后端用 `cp -a src/server/.` 递归（含 `migrations/`、`sync/`）。
+> - 详见 `docs/progress/ad-hoc/2026-07-07-ops-ip8088-repoint-prod.md`。
+
 生产环境已于 2026-06-24 按 Owner 确认域名重新部署；此前误用 `8089` 和开发目录软链的配置已撤回。
 
 - 入口：`https://workboard.huiyiyou.cloud`
