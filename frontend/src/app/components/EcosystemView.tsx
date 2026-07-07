@@ -1193,25 +1193,27 @@ export function ConversationView({ sessionId, onClose }: { sessionId: string; on
       </div>
 
       {/* 对话区 */}
-      <div className="flex-1 overflow-y-auto bg-[#f3f5f8] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {loading ? (
-          <div className="p-5 space-y-4 max-w-4xl mx-auto">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-3 w-20 bg-[#030213]/[0.08] rounded animate-pulse" />
-                <div className="h-16 bg-white border border-border/70 rounded-lg animate-pulse" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="p-5">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-xs text-red-600">{error}</p>
+      <div className="flex-1 overflow-y-auto bg-[#e3e9f0] px-0 sm:px-6 py-0 sm:py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="min-h-full max-w-5xl mx-auto bg-[#f8fafc] border-x sm:border border-[#d4dce7] sm:rounded-lg shadow-sm">
+          {loading ? (
+            <div className="p-5 space-y-4 max-w-4xl mx-auto">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-20 bg-[#030213]/[0.08] rounded animate-pulse" />
+                  <div className="h-16 bg-white border border-border/70 rounded-lg animate-pulse" />
+                </div>
+              ))}
             </div>
-          </div>
-        ) : data?.messages ? (
-          <MessageList messages={data.messages} />
-        ) : null}
+          ) : error ? (
+            <div className="p-5">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <p className="text-xs text-red-600">{error}</p>
+              </div>
+            </div>
+          ) : data?.messages ? (
+            <MessageList messages={data.messages} />
+          ) : null}
+        </div>
       </div>
 
       {/* 底部只读提示 */}
