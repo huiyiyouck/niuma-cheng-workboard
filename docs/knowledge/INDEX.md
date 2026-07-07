@@ -12,6 +12,8 @@
 
 ## Engineering（工程）
 
+- [Claude Code 会话数据存储结构](engineering/claude-code-session-storage.md)：本地 JSONL 文件格式、目录编码规则、content 提取规则、增量同步策略、角色自动识别规则（v0.2 Spike-001 验证结论）
+
 ## Testing（测试）
 
 ## DevOps（运维/部署）

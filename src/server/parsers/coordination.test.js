@@ -72,7 +72,7 @@ test("readCoordination 读真实仓：活跃需求/阻塞/计数符合预期", a
   assert.equal(result.blockerCount, 0); // 当前无活跃阻塞
   assert.equal(result.contractCount, 2);
   assert.equal(result.communicationCount, 2); // REQ-001 + REQ-002（排除 README）
-  assert.equal(result.bcrCount, 11); // 2026-07-05 公告板新增 BCR-011
+  assert.equal(result.bcrCount, 12); // 2026-07-06 新增 BCR-012
 });
 
 test("readCoordination 目录不存在 → status read-error", async () => {

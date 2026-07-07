@@ -10,7 +10,7 @@
 - 关联 Change Note：IRC-001/002/003 已落地但未归档独立文件
 - 遗留问题/风险：① M-1~M-5 建议在部署就绪检查前补齐；② DevOps R2 提出的 DH-1（无 `.env.example`）和 DH-2（无版本化迁移机制）仍需 Developer/DevOps 协同处理。
 - 下一步入口：Developer 修正 DH-1/DH-2 → DevOps 复核 → 通过后进入部署就绪检查。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2-1 Architect 复核）
 - 本次角色：Architect（架构师）
@@ -22,7 +22,7 @@
 - 关联 Change Note：IRC-001/002/003 已落地但未归档独立文件
 - 遗留问题/风险：① H-1~H-3 必须修正后才能进入部署就绪检查；② `project-index.test.js` 断言需在修正阻塞项时同步更新；③ M-1~M-5 建议同一轮补齐；④ DevOps R2 提出的 DH-1/DH-2 仍需 Developer/DevOps 协同处理。
 - 下一步入口：Developer 修正 H-1~H-3 + 同步修复 `project-index.test.js` 断言 → Architect 复核。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2 Review）
 - 本次角色：Architect
@@ -34,7 +34,7 @@
 - 关联 Change Note：IRC-001/002/003 已落地但未归档独立文件
 - 遗留问题/风险：① H-1~H-3 必须修正后才能进入部署就绪检查；② M-1~M-5 可在同一轮或后续补齐；③ 生产数据源同步脚本仍由 DevOps 在部署阶段落地，后端只读取 `sync-status.json`。
 - 下一步入口：Developer 修正 H-1~H-3 → Architect 复核。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-07-05 — 会话摘要（v0.2 设计文档 R1 修正）
 
@@ -65,7 +65,7 @@
   1. Owner 确认 PRD 定稿
   2. Architect 进入设计阶段，输出 v0.2-design.md
   3. 设计阶段需优先明确：SQLite 选型、API 清单、content 提取规则、增量同步策略
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-06-23 — 会话摘要（Web Agent Console 架构规划）
 - 本次角色：Architect（架构师）
@@ -77,7 +77,7 @@
 - 关联 Change Note：无
 - 遗留问题/风险：后续需单独预研 CLI adapter、会话持久化、repo 锁、权限确认、SSE/WebSocket 和访问控制。
 - 下一步入口：v0.1 继续按当前实现阶段推进；Web Agent Console 待 Owner 后续单独启动预研或 v0.2 PRD。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-06-23 — 会话摘要（Owner 确认设计选项）
 - 本次角色：Architect（架构师）
@@ -89,7 +89,7 @@
 - 关联 Change Note：无
 - 遗留问题/风险：待 Developer / Tester Review。
 - 下一步入口：Owner 切到 Developer / Tester 角色 Review `docs/progress/iterations/v0.1-design.md`。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-06-23 — 会话摘要（设计产出）
 - 本次角色：Architect（架构师）
@@ -101,7 +101,7 @@
 - 关联 Change Note：无
 - 遗留问题/风险：待 Developer / Tester Review；实现阶段需整理前端依赖和根目录启动脚本。
 - 下一步入口：Owner 切到 Developer / Tester 角色 Review `docs/progress/iterations/v0.1-design.md`。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-06-23 — 会话摘要（PRD Review）
 - 本次角色：Architect（架构师）
@@ -113,7 +113,7 @@
 - 关联 Change Note：无
 - 遗留问题/风险：Developer Review 尚未完成；后续设计阶段需定义稳定后端返回模型与错误降级模型。
 - 下一步入口：Owner 切到 Developer 角色完成 `docs/progress/iterations/v0.1-prd.md` 的 R1 Review。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）
 
 ## 2026-06-23 — 会话摘要
 - 本次角色：Architect（架构师）
@@ -125,4 +125,4 @@
 - 关联 Change Note：无
 - 遗留问题/风险：Developer Review 尚未完成；功能 PRD 待原型图完成后回填。
 - 下一步入口：Owner 切到 Developer 角色完成 `docs/progress/iterations/v0.1-ui.md` 的 R1 Review。
-- 收尾状态：未收尾
+- 收尾状态：✅ 已收尾（v0.2 迭代关闭检查通过，2026-07-07）

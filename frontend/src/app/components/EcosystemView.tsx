@@ -209,7 +209,7 @@ function SyncBar() {
         ) : lastResult ? (
           <p className="text-xs text-muted-foreground truncate">{lastResult}</p>
         ) : (
-          <p className="text-xs text-muted-foreground">Claude Code 会话每次服务启动自动同步一次；需要最新数据时可手动刷新</p>
+          <p className="text-xs text-muted-foreground">会话每次服务启动自动同步一次；需要最新数据时可手动刷新</p>
         )}
       </div>
       <button

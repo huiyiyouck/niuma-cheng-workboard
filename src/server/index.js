@@ -3,7 +3,8 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSnapshot } from "./snapshot.js";
-import { withClient, ensureSchema } from "./db.js";
+import { withClient } from "./db.js";
+import { applyMigrations, getMigrationStatus } from "./migrations.js";
 import { syncAllSessions, getSyncStatus, collectAllowedProjectIds } from "./sync/claude-sync.js";
 import { parseVersionList } from "./parsers/project-index.js";
 import { parseIterationRecord } from "./parsers/iteration-record.js";
@@ -133,7 +134,7 @@ export function createServer({ configPath = DEFAULT_CONFIG_PATH, distDir = DEFAU
 }
 
 async function handleListSessions(res, url) {
-  await ensureSchema();
+  await applyMigrations();
   let projectId = url.searchParams.get("project_id");
   const status = url.searchParams.get("status") || "all";
   const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 200);
@@ -221,7 +222,7 @@ async function handleSessionDetails(res, url) {
   const sessionId = url.searchParams.get("id");
   if (!sessionId) return sendJson(res, 400, { error: "id 参数缺失" });
 
-  await ensureSchema();
+  await applyMigrations();
   await withClient(async (client) => {
     const sessionRes = await client.query(
       `SELECT s.*, m.id as mapping_id, m.role as mapped_role, m.project_id as mapped_project_id, m.note as mapping_note
@@ -252,7 +253,7 @@ async function handleSessionDetails(res, url) {
 
 async function handleListMappings(res, url) {
   const projectId = url.searchParams.get("project_id");
-  await ensureSchema();
+  await applyMigrations();
 
   await withClient(async (client) => {
     let sql = `SELECT m.id, m.session_id, m.project_id, m.role, m.note, m.created_at, m.updated_at,
@@ -279,7 +280,7 @@ async function handleCreateMapping(req, res) {
     return sendJson(res, 400, { error: "session_id, project_id, role 必填" });
   }
 
-  await ensureSchema();
+  await applyMigrations();
   await withClient(async (client) => {
     const sessionRes = await client.query("SELECT id FROM claude_sessions WHERE id = $1", [session_id]);
     if (sessionRes.rows.length === 0) {
@@ -309,7 +310,7 @@ async function handleDeleteMapping(res, url) {
   const sessionId = url.searchParams.get("session_id");
   if (!sessionId) return sendJson(res, 400, { error: "session_id 参数缺失" });
 
-  await ensureSchema();
+  await applyMigrations();
   await withClient(async (client) => {
     const existing = await client.query("SELECT id FROM session_mappings WHERE session_id = $1", [sessionId]);
     if (existing.rows.length === 0) {
@@ -360,12 +361,18 @@ async function handleHealth(res) {
     version = pkg.version ?? "unknown";
   } catch {}
   let db = "ok";
+  let migrations = "ok";
   try {
     await withClient((client) => client.query("SELECT 1"));
-  } catch {
+    const status = await getMigrationStatus();
+    if (status.pending > 0) {
+      migrations = `${status.pending} pending`;
+    }
+  } catch (err) {
     db = "error";
+    migrations = "error";
   }
-  sendJson(res, db === "ok" ? 200 : 503, { status: db === "ok" ? "ok" : "degraded", db, version });
+  sendJson(res, db === "ok" ? 200 : 503, { status: db === "ok" ? "ok" : "degraded", db, migrations, version });
 }
 
 async function handleSync(req, res, url) {

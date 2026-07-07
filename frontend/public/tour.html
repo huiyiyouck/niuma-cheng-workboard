@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一人公司 AI 项目操作系统 · 导览</title>
+<style>
+  :root{
+    --bg-0:#08060f; --bg-1:#0f0c29; --bg-2:#1a1440; --bg-3:#241b52;
+    --card:#151030; --card-edge:rgba(139,92,246,.22);
+    --ink:#ece8ff; --ink-dim:#a79fd4; --ink-faint:#6b639b;
+    --purple:#8b5cf6; --purple-hi:#a78bfa; --blue:#3b82f6; --green:#10b981;
+    --yellow:#eab308; --pink:#ec4899; --red:#f43f5e;
+    --serif:"Songti SC","STSong","SimSun",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:"SF Mono","Menlo","Consolas","PingFang SC",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg-0); color:var(--ink); font-family:var(--sans);
+    line-height:1.7; overflow-x:hidden;
+  }
+  /* ── 背景氛围:网格 + 光晕 + 颗粒 ── */
+  .atmos{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .atmos::before{content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(900px 600px at 80% -10%,rgba(139,92,246,.28),transparent 60%),
+      radial-gradient(700px 500px at 10% 40%,rgba(59,130,246,.14),transparent 60%),
+      radial-gradient(800px 700px at 60% 110%,rgba(236,72,153,.12),transparent 60%),
+      linear-gradient(160deg,var(--bg-1),var(--bg-0) 70%);
+  }
+  .atmos::after{content:"";position:absolute;inset:0;opacity:.5;
+    background-image:
+      linear-gradient(rgba(139,92,246,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(139,92,246,.05) 1px,transparent 1px);
+    background-size:56px 56px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,#000 30%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,#000 30%,transparent 75%);
+  }
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.35;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");}
+
+  main{position:relative;z-index:2}
+  section{min-height:100vh;display:flex;align-items:center;padding:96px 24px;scroll-margin-top:0}
+  .wrap{max-width:1080px;margin:0 auto;width:100%}
+
+  /* ── 右侧进度轨 ── */
+  .rail{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:10;
+    display:flex;flex-direction:column;gap:16px}
+  .rail a{display:flex;align-items:center;gap:10px;text-decoration:none;justify-content:flex-end}
+  .rail .lbl{font-size:11px;color:var(--ink-faint);font-family:var(--mono);
+    opacity:0;transform:translateX(6px);transition:.25s}
+  .rail a:hover .lbl,.rail a.on .lbl{opacity:1;transform:none;color:var(--purple-hi)}
+  .rail .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-faint);
+    transition:.25s;flex:none}
+  .rail a.on .dot{background:var(--purple);box-shadow:0 0 0 5px rgba(139,92,246,.22);transform:scale(1.25)}
+  .pageno{position:fixed;left:26px;bottom:24px;z-index:10;font-family:var(--mono);
+    font-size:12px;color:var(--ink-faint);letter-spacing:.2em}
+  .pageno b{color:var(--purple-hi);font-weight:600}
+  .keyhint{position:fixed;right:26px;bottom:24px;z-index:10;font-family:var(--mono);
+    font-size:11px;color:var(--ink-faint)}
+  .keyhint kbd{border:1px solid var(--card-edge);border-radius:4px;padding:1px 6px;margin:0 2px;background:rgba(139,92,246,.08)}
+
+  /* ── 通用元素 ── */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.35em;color:var(--purple-hi);
+    text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+  .kicker::before{content:"";width:34px;height:1px;background:var(--purple)}
+  h1,h2{font-family:var(--serif);font-weight:700;letter-spacing:.02em}
+  h2{font-size:clamp(28px,4.2vw,44px);margin-bottom:14px}
+  .lede{color:var(--ink-dim);max-width:640px;font-size:16px;margin-bottom:44px}
+  .card{background:linear-gradient(180deg,rgba(139,92,246,.07),rgba(21,16,48,.6));
+    border:1px solid var(--card-edge);border-radius:16px;padding:26px 28px;
+    backdrop-filter:blur(6px)}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:13px 26px;
+    font-size:15px;font-weight:600;text-decoration:none;transition:.2s;cursor:pointer;border:0}
+  .btn-solid{background:linear-gradient(135deg,var(--purple),#6d3ef0);color:#fff;
+    box-shadow:0 8px 30px rgba(139,92,246,.35)}
+  .btn-solid:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(139,92,246,.5)}
+  .btn-ghost{border:1px solid var(--card-edge);color:var(--ink-dim);background:transparent}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--purple)}
+  .tag{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;
+    border:1px solid var(--card-edge);color:var(--ink-dim)}
+
+  /* 滚动显现 */
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+  .rv.in{opacity:1;transform:none}
+  .rv.d1{transition-delay:.1s}.rv.d2{transition-delay:.2s}.rv.d3{transition-delay:.3s}.rv.d4{transition-delay:.4s}
+
+  /* ═══ S0 Hero ═══ */
+  #hero{flex-direction:column;justify-content:center;text-align:center;position:relative}
+  #hero .badge{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--purple-hi);
+    border:1px solid var(--card-edge);border-radius:99px;padding:7px 18px;
+    background:rgba(139,92,246,.08);margin-bottom:34px;display:inline-block}
+  #hero h1{font-size:clamp(38px,7vw,84px);line-height:1.18;margin-bottom:8px}
+  #hero h1 .thin{display:block;font-size:.42em;font-weight:400;color:var(--ink-dim);
+    font-family:var(--sans);letter-spacing:.28em;margin-top:18px}
+  #hero .sub{color:var(--ink-dim);max-width:620px;margin:26px auto 44px;font-size:17px}
+  #hero .cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .scroll-cue{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+    color:var(--ink-faint);font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    animation:cue 2.2s ease-in-out infinite}
+  @keyframes cue{0%,100%{transform:translate(-50%,0);opacity:.5}50%{transform:translate(-50%,8px);opacity:1}}
+  .hero-stats{display:flex;gap:0;justify-content:center;margin-top:60px;flex-wrap:wrap}
+  .hero-stats .st{padding:0 34px;border-right:1px solid var(--card-edge);text-align:center}
+  .hero-stats .st:last-child{border-right:0}
+  .hero-stats b{display:block;font-family:var(--serif);font-size:30px;color:var(--purple-hi)}
+  .hero-stats span{font-size:12px;color:var(--ink-faint)}
+
+  /* ═══ S1 问题 ═══ */
+  .pains{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .pain b{display:block;font-size:17px;margin-bottom:8px}
+  .pain p{font-size:14px;color:var(--ink-dim)}
+  .pain .no{font-family:var(--mono);font-size:12px;color:var(--pink);margin-bottom:14px;display:block}
+  .turn{margin-top:44px;text-align:center;font-family:var(--serif);font-size:clamp(19px,2.6vw,26px);color:var(--ink)}
+  .turn em{color:var(--purple-hi);font-style:normal;border-bottom:2px solid var(--purple)}
+
+  /* ═══ S2 工作流层 ═══ */
+  .roles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:40px}
+  .role{padding:22px 20px;border-radius:14px;border:1px solid var(--card-edge);
+    background:rgba(21,16,48,.55);transition:.25s;position:relative;overflow:hidden}
+  .role:hover{transform:translateY(-4px);border-color:var(--purple)}
+  .role::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--rc,var(--purple))}
+  .role .ico{font-size:26px}
+  .role b{display:block;margin:10px 0 2px;font-size:16px}
+  .role i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .role p{font-size:13px;color:var(--ink-dim);margin-top:10px}
+  .role .not{margin-top:10px;font-size:12px;color:var(--ink-faint)}
+  .role .not::before{content:"✕ ";color:var(--red)}
+  /* 门禁流水线 */
+  .pipe{display:flex;align-items:stretch;gap:0;margin-top:8px;flex-wrap:wrap}
+  .pnode{flex:1;min-width:96px;text-align:center;position:relative;padding:18px 6px 6px}
+  .pnode .bx{border:1px solid var(--card-edge);border-radius:10px;padding:12px 8px;
+    font-size:13px;background:rgba(21,16,48,.6)}
+  .pnode.gate .bx{border-color:rgba(244,63,94,.45);background:rgba(244,63,94,.07)}
+  .pnode .g{position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;white-space:nowrap}
+  .pnode .g::before{content:"🚫 "}
+  .parrow{align-self:center;color:var(--ink-faint);padding:18px 4px 0;font-family:var(--mono)}
+
+  /* ═══ S3 门禁回放 ═══ */
+  .replay{display:grid;grid-template-columns:1fr 340px;gap:26px;align-items:start}
+  .term{border:1px solid var(--card-edge);border-radius:16px;overflow:hidden;
+    background:#0c0a1d;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;
+    background:rgba(139,92,246,.08);border-bottom:1px solid var(--card-edge)}
+  .term-bar .c{width:11px;height:11px;border-radius:50%}
+  .term-bar .t{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-left:10px}
+  .chat{padding:22px;min-height:380px;max-height:440px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+  .msg{max-width:86%;padding:12px 16px;border-radius:12px;font-size:14px;
+    opacity:0;transform:translateY(10px);animation:pop .4s forwards}
+  @keyframes pop{to{opacity:1;transform:none}}
+  .msg.u{align-self:flex-end;background:linear-gradient(135deg,var(--purple),#6d3ef0);
+    color:#fff;border-bottom-right-radius:3px}
+  .msg.a{align-self:flex-start;background:rgba(139,92,246,.09);border:1px solid var(--card-edge);
+    border-bottom-left-radius:3px;color:var(--ink)}
+  .msg.a .who{font-family:var(--mono);font-size:10px;color:var(--purple-hi);
+    letter-spacing:.15em;display:block;margin-bottom:6px}
+  .msg.gate-hit{border-color:rgba(244,63,94,.55);background:rgba(244,63,94,.08)}
+  .msg.gate-hit .who{color:var(--red)}
+  .stamp{align-self:center;font-family:var(--mono);font-size:11px;color:var(--red);
+    border:1px dashed rgba(244,63,94,.5);border-radius:8px;padding:5px 14px;
+    letter-spacing:.2em;opacity:0;animation:pop .4s forwards;background:rgba(244,63,94,.06)}
+  .typing{align-self:flex-start;font-family:var(--mono);font-size:12px;color:var(--ink-faint);padding:4px 8px}
+  .typing i{animation:blink 1s infinite;font-style:normal}
+  @keyframes blink{50%{opacity:.2}}
+  .replay-ctl{padding:14px 18px;border-top:1px solid var(--card-edge);display:flex;gap:12px;align-items:center;
+    background:rgba(21,16,48,.5)}
+  .replay-ctl .prog{flex:1;height:3px;background:rgba(139,92,246,.15);border-radius:2px;overflow:hidden}
+  .replay-ctl .prog i{display:block;height:100%;background:var(--purple);width:0;transition:.4s}
+  .steps{display:flex;flex-direction:column;gap:10px}
+  .step{border:1px solid var(--card-edge);border-radius:12px;padding:14px 16px;
+    font-size:13px;color:var(--ink-dim);transition:.3s;position:relative;background:rgba(21,16,48,.4)}
+  .step .n{font-family:var(--mono);font-size:10px;color:var(--ink-faint);letter-spacing:.15em}
+  .step.on{border-color:var(--purple);color:var(--ink);background:rgba(139,92,246,.1)}
+  .step.on .n{color:var(--purple-hi)}
+  .step.hit{border-color:rgba(244,63,94,.5)}
+  .step.hit .n{color:var(--red)}
+
+  /* ═══ S4 组织架构层 ═══ */
+  .org{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .org-map{grid-column:1/-1;padding:34px;text-align:center}
+  .org-map .lv{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+  .org-map .node{border:1px solid var(--card-edge);border-radius:12px;padding:12px 22px;
+    font-size:14px;background:rgba(21,16,48,.6)}
+  .org-map .node b{display:block;font-size:15px}
+  .org-map .node i{font-style:normal;font-size:11px;color:var(--ink-faint);font-family:var(--mono)}
+  .org-map .node.cmd{border-color:var(--yellow);box-shadow:0 0 30px rgba(234,179,8,.12)}
+  .org-map .node.staff{border-color:var(--purple)}
+  .org-map .node.board{border-color:var(--blue)}
+  .org-map .node.sop{border-color:var(--pink)}
+  .org-map .node.proj{border-color:var(--green)}
+  .org-map .link{color:var(--ink-faint);font-family:var(--mono);font-size:12px;padding:10px 0}
+  .law{border-left:3px solid var(--yellow);padding:14px 18px;background:rgba(234,179,8,.05);
+    border-radius:0 12px 12px 0;font-size:14px}
+  .law b{color:var(--yellow)}
+  .bcr-flow{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+  .bcr-flow .s{border:1px solid var(--card-edge);border-radius:8px;padding:5px 12px;background:rgba(21,16,48,.6)}
+  .bcr-flow .s.done{border-color:var(--green);color:var(--green)}
+  .evo{margin-top:14px;font-size:13.5px}
+  .evo li{list-style:none;padding:9px 0;border-bottom:1px dashed rgba(139,92,246,.15);color:var(--ink-dim)}
+  .evo li:last-child{border-bottom:0}
+  .evo b{color:var(--pink);font-family:var(--mono);font-size:12px;margin-right:10px}
+
+  /* ═══ S5 活证据 ═══ */
+  .proof{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+  .proof .card{transition:.25s}
+  .proof .card:hover{transform:translateY(-4px);border-color:var(--purple)}
+  .proof .ico{font-size:28px}
+  .proof b{display:block;margin:12px 0 4px;font-size:16px}
+  .proof p{font-size:13px;color:var(--ink-dim)}
+  .proof .st{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+  .live{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--green)}
+  .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);
+    animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  .viewer-hi{border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.05);
+    border-radius:16px;padding:26px 28px}
+  .viewer-hi b.h{font-family:var(--serif);font-size:19px;display:block;margin-bottom:8px}
+  .viewer-hi p{color:var(--ink-dim);font-size:14.5px}
+
+  /* ═══ S6 入口 ═══ */
+  #doors{text-align:center}
+  .doors{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:44px 0;text-align:left}
+  .door{padding:26px;border-radius:16px;border:1px solid var(--card-edge);
+    background:rgba(21,16,48,.55);text-decoration:none;color:var(--ink);transition:.25s;display:block}
+  .door:hover{transform:translateY(-4px);border-color:var(--purple);box-shadow:0 18px 50px rgba(139,92,246,.2)}
+  .door .n{font-family:var(--mono);font-size:11px;color:var(--purple-hi);letter-spacing:.2em}
+  .door b{display:block;font-size:17px;margin:10px 0 6px}
+  .door p{font-size:13px;color:var(--ink-dim)}
+  .door.soon{opacity:.65;cursor:default}
+  .door.soon:hover{transform:none;box-shadow:none;border-color:var(--card-edge)}
+  footer{padding:40px 24px 60px;text-align:center;color:var(--ink-faint);font-size:12.5px;
+    font-family:var(--mono);position:relative;z-index:2}
+
+  @media(max-width:900px){
+    .rail,.keyhint{display:none}
+    .roles,.pains,.proof,.doors{grid-template-columns:1fr}
+    .replay{grid-template-columns:1fr}
+    .org{grid-template-columns:1fr}
+    section{padding:72px 18px}
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div><div class="grain"></div>
+
+<nav class="rail" id="rail">
+  <a href="#hero"><span class="lbl">开场</span><span class="dot"></span></a>
+  <a href="#pain"><span class="lbl">问题</span><span class="dot"></span></a>
+  <a href="#flow"><span class="lbl">工作流层</span><span class="dot"></span></a>
+  <a href="#replay"><span class="lbl">门禁实录</span><span class="dot"></span></a>
+  <a href="#org"><span class="lbl">组织架构层</span><span class="dot"></span></a>
+  <a href="#proof"><span class="lbl">活证据</span><span class="dot"></span></a>
+  <a href="#doors"><span class="lbl">体验入口</span><span class="dot"></span></a>
+</nav>
+<div class="pageno"><b id="pgNow">01</b> / <span id="pgAll">07</span></div>
+<div class="keyhint"><kbd>↑</kbd><kbd>↓</kbd> 或滚动翻页</div>
+
+<main>
+
+<!-- ═══ S0 开场 ═══ -->
+<section id="hero">
+  <div class="wrap">
+    <span class="badge">TRAE AI 创造力大赛 · 学习工作赛道</span>
+    <h1>一人公司<br>AI 项目操作系统
+      <span class="thin">AGENT WORKFLOW × WORKBOARD</span>
+    </h1>
+    <p class="sub">一个人,同时驾驭多个 AI 项目。分层工作流管住协作规则,跨项目看板看清全局状态——把"聊天式 AI 编程"升级为<b>可治理的工程系统</b>。</p>
+    <div class="cta">
+      <a class="btn btn-solid" href="https://workboard.huiyiyou.cloud" target="_blank">打开线上看板 →</a>
+      <a class="btn btn-ghost" href="#pain">60 秒看懂 ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="st"><b>4</b><span>角色分工</span></div>
+      <div class="st"><b>5</b><span>道硬门禁</span></div>
+      <div class="st"><b>3</b><span>个真实上线项目</span></div>
+      <div class="st"><b>10+</b><span>次框架自我修正</span></div>
+    </div>
+  </div>
+  <div class="scroll-cue">SCROLL</div>
+</section>
+
+<!-- ═══ S1 问题 ═══ -->
+<section id="pain">
+  <div class="wrap">
+    <div class="kicker rv">THE PROBLEM</div>
+    <h2 class="rv">AI 写代码很快,<br>但项目一多,一切开始失控</h2>
+    <p class="lede rv">这是每个用 AI 编程的人都会撞上的墙——瓶颈早已不是"写代码",而是治理。</p>
+    <div class="pains">
+      <div class="card pain rv d1"><span class="no">01</span><b>项目记忆管不住</b><p>聊天记录就是全部项目记忆。会话一关,上下文归零,AI 不知道"上次干到哪"。</p></div>
+      <div class="card pain rv d2"><span class="no">02</span><b>规则越改越乱</b><p>"改业务需求"和"改协作规则"混在一起,各项目的规则版本悄悄漂移,谁也说不清哪份是最新。</p></div>
+      <div class="card pain rv d3"><span class="no">03</span><b>全局状态没人看得清</b><p>多个项目、多个 AI 会话并行,谁在等谁、哪里阻塞了,要翻遍所有仓库才能拼出答案。</p></div>
+    </div>
+    <p class="turn rv d4">所以我不是做了一个 App,而是给自己造了一套<em>操作系统</em>。</p>
+  </div>
+</section>
+
+<!-- ═══ S2 工作流层 ═══ -->
+<section id="flow">
+  <div class="wrap">
+    <div class="kicker rv">LAYER 1 · WORKFLOW</div>
+    <h2 class="rv">四个角色,五道门禁</h2>
+    <p class="lede rv">默认是通用助手,不越权、不擅自进流程。一句"你是 PM",AI 切换角色、加载规则、进入门禁。每个角色边界写死,不靠自觉。</p>
+    <div class="roles">
+      <div class="role rv d1" style="--rc:var(--purple)"><span class="ico">🎯</span><b>PM</b><i>产品经理</i><p>需求、PRD、验收标准、范围边界</p><div class="not">不做技术选型、不写代码</div></div>
+      <div class="role rv d2" style="--rc:var(--blue)"><span class="ico">🏗️</span><b>Architect</b><i>架构师</i><p>技术方案、架构设计、ADR</p><div class="not">不做产品决策、不写业务代码</div></div>
+      <div class="role rv d3" style="--rc:var(--green)"><span class="ico">💻</span><b>Developer</b><i>开发工程师</i><p>实现、自测、修复 Review 问题</p><div class="not">不自行决定需求范围</div></div>
+      <div class="role rv d4" style="--rc:var(--pink)"><span class="ico">🚀</span><b>DevOps</b><i>运维部署</i><p>部署、环境、发布就绪检查</p><div class="not">不做产品/技术决策</div></div>
+    </div>
+    <div class="card rv d2">
+      <div class="pipe">
+        <div class="pnode"><div class="bx">PRD 创建</div></div>
+        <div class="parrow">→</div>
+        <div class="pnode gate"><span class="g">不审不定稿</span><div class="bx">Review</div></div>
+        <div class="parrow">→</div>
+        <div class="pnode"><div class="bx">定稿</div></div>
+        <div class="parrow">→</div>
+        <div class="pnode gate"><span class="g">无PRD不开工</span><div class="bx">开发实现</div></div>
+        <div class="parrow">→</div>
+        <div class="pnode gate"><span class="g">不自测不部署</span><div class="bx">部署上线</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S3 门禁实录回放 ═══ -->
+<section id="replay">
+  <div class="wrap">
+    <div class="kicker rv">GATE IN ACTION</div>
+    <h2 class="rv">你让 AI 直接写代码,它拒绝了你</h2>
+    <p class="lede rv">这是这套工作流最有冲击力的时刻。下面是一轮真实交互的回放——试着让 AI 跳过 Review 直接开发,看它怎么回应。</p>
+    <div class="replay rv d1">
+      <div class="term">
+        <div class="term-bar">
+          <span class="c" style="background:#f43f5e"></span>
+          <span class="c" style="background:#eab308"></span>
+          <span class="c" style="background:#10b981"></span>
+          <span class="t">workflow-session · 门禁回放</span>
+        </div>
+        <div class="chat" id="chat"></div>
+        <div class="replay-ctl">
+          <button class="btn btn-solid" id="playBtn" style="padding:9px 20px;font-size:13px">▶ 播放回放</button>
+          <div class="prog"><i id="progBar"></i></div>
+          <button class="btn btn-ghost" id="resetBtn" style="padding:9px 14px;font-size:13px">↺</button>
+        </div>
+      </div>
+      <div class="steps" id="steps">
+        <div class="step" data-i="0"><span class="n">STEP 1</span><br>试探身份:AI 保持通用助手,不擅自进工作流</div>
+        <div class="step" data-i="1"><span class="n">STEP 2</span><br>"你是 PM"——切换角色,检查项目状态</div>
+        <div class="step" data-i="2"><span class="n">STEP 3</span><br>PM 按模板快速产出 PRD,状态:待 Review</div>
+        <div class="step hit" data-i="3"><span class="n">STEP 4 · 门禁点</span><br>要求跳过 Review 直接开发 → <b style="color:var(--red)">被拒绝</b></div>
+        <div class="step" data-i="4"><span class="n">STEP 5</span><br>"进入 Review"——流程被正确触发</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S4 组织架构层 ═══ -->
+<section id="org">
+  <div class="wrap">
+    <div class="kicker rv">LAYER 2 · ORGANIZATION</div>
+    <h2 class="rv">往上一层:这不是提示词,<br>是一家"薄公司"的组织架构</h2>
+    <p class="lede rv">单个角色智能体到处都有。差异在于:这套工作流之上,还有一整层组织设计——指挥官—参谋长制,让一个人真正"开公司"般地运营多个 AI 项目。</p>
+    <div class="org">
+      <div class="card org-map rv d1">
+        <div class="lv"><div class="node cmd"><b>👤 指挥官(Owner)</b><i>唯一决策者 · 亲自进组当 PM</i></div></div>
+        <div class="link">│ 拍板 · 授权</div>
+        <div class="lv">
+          <div class="node staff"><b>🎖️ 参谋长</b><i>出方案 · 办事务 · 维护 SOP 真源 · 不决策</i></div>
+          <div class="node board"><b>📋 公告板</b><i>跨项目协调仓 · 白名单直写</i></div>
+          <div class="node sop"><b>📐 工作流真源仓</b><i>统一 SOP · 经 BCR 演进回流</i></div>
+        </div>
+        <div class="link">│ 统一 SOP 作战</div>
+        <div class="lv">
+          <div class="node proj"><b>📰 小报</b><i>新闻聚合</i></div>
+          <div class="node proj"><b>🤖 AI 中枢</b><i>评分/摘要</i></div>
+          <div class="node proj"><b>📊 看板</b><i>全局状态</i></div>
+        </div>
+      </div>
+      <div class="card rv d2">
+        <b style="font-family:var(--serif);font-size:18px">三条组织法则</b>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+          <div class="law"><b>①</b> 结构跟着物理走——一个头衔 = 一个目录 + 一个会话</div>
+          <div class="law"><b>②</b> 参谋不决策——AI 出方案办事务,拍板永远在人</div>
+          <div class="law"><b>③</b> 半自动是设计选择——决策权下放留给下一次升级</div>
+        </div>
+      </div>
+      <div class="card rv d3">
+        <b style="font-family:var(--serif);font-size:18px">框架会自我修正(BCR 闭环)</b>
+        <div class="bcr-flow">
+          <span class="s">提报</span>→<span class="s">评估</span>→<span class="s">采纳</span>→<span class="s">落地真源</span>→<span class="s done">回流全部下游</span>
+        </div>
+        <ul class="evo">
+          <li><b>BCR-004/006</b>角色 6 → 4:UI 并入 PM,Tester 并入开发自测</li>
+          <li><b>BCR-007</b>组织定位升级:指挥官—参谋长制(薄公司)</li>
+          <li><b>BCR-008</b>回流护栏:同步脚本自检,防误改下游</li>
+        </ul>
+        <p style="font-size:12.5px;color:var(--ink-faint);margin-top:12px">规则版本用 <span style="font-family:var(--mono);color:var(--yellow)">.workflow-version</span> 游标逐项目追踪,不漂移。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S5 活证据 ═══ -->
+<section id="proof">
+  <div class="wrap">
+    <div class="kicker rv">LIVING PROOF</div>
+    <h2 class="rv">不是方法论 PPT,<br>是三个真实上线的项目在用它</h2>
+    <p class="lede rv">这套系统每天在生产环境里跑。看板上的需求池、BCR、版本游标,全部是真实项目运转产生的数据,不是演示数据。</p>
+    <div class="proof">
+      <div class="card rv d1"><span class="ico">📰</span><b>牛马程小报</b><p>AI 多源新闻聚合平台,抓取调度 / 分类 / 评分加权</p><div class="st"><span class="live">news.huiyiyou.cloud</span></div></div>
+      <div class="card rv d2"><span class="ico">📊</span><b>跨项目看板</b><p>聚合所有项目的角色状态、需求池、阻塞与会话记录</p><div class="st"><span class="live">workboard.huiyiyou.cloud</span></div></div>
+      <div class="card rv d3"><span class="ico">🤖</span><b>AI 处理中枢</b><p>生态内统一的评分 / 标签 / 摘要服务,小报的 L1 评分由它承担</p><div class="st"><span class="tag">v0.1 已交付 · 内部服务</span></div></div>
+    </div>
+    <div class="viewer-hi rv d4">
+      <b class="h">🔍 最新迭代:在看板里回放真实的 AI 协作会话</b>
+      <p>看板 v0.2 新增「项目会话视图 + 对话查看器 + 双层时间轴」——每一轮迭代里,PM 怎么写 PRD、Review 怎么打回、开发怎么修复,<b style="color:var(--green)">原始对话可以直接点开看</b>。整个开发过程全程可审计,这就是"可治理的 AI 编程"最直接的样子。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S6 体验入口 ═══ -->
+<section id="doors">
+  <div class="wrap">
+    <div class="kicker rv" style="justify-content:center">GET STARTED</div>
+    <h2 class="rv">三个入口,按深度递进</h2>
+    <div class="doors">
+      <a class="door rv d1" href="https://workboard.huiyiyou.cloud" target="_blank">
+        <span class="n">01 · 看结果</span><b>线上看板</b>
+        <p>直接访问。推荐路径:项目总览 → 会话回放 → 需求池/BCR。2 分钟。</p>
+      </a>
+      <!-- 【回填】录屏上线后把 href 换成视频链接,并删除 class 里的 soon -->
+      <a class="door soon rv d2" href="#" onclick="return false">
+        <span class="n">02 · 看过程</span><b>演示视频(即将上线)</b>
+        <p>2-3 分钟完整看一轮真实迭代:需求 → 开发 → Review → 看板状态变化。</p>
+      </a>
+      <!-- 【回填】GitHub 公开仓上线后把 href 换成仓库链接,并删除 class 里的 soon -->
+      <a class="door soon rv d3" href="#" onclick="return false">
+        <span class="n">03 · 亲自用</span><b>工作流开源包(即将上线)</b>
+        <p>基于 AGENTS.md 开放标准,放进你自己的项目约 5 分钟即可启用。</p>
+      </a>
+    </div>
+    <p class="rv d4" style="color:var(--ink-faint);font-size:13px">本页即导览 · 参赛作品由这套工作流自身迭代产出</p>
+  </div>
+</section>
+
+</main>
+<footer>一人公司 AI 项目操作系统 · Agent Workflow × Workboard · TRAE AI 创造力大赛参赛作品</footer>
+
+<script>
+/* ── 滚动显现 ── */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* ── 进度轨 + 页码 ── */
+const secs=[...document.querySelectorAll('section')];
+const railLinks=[...document.querySelectorAll('#rail a')];
+document.getElementById('pgAll').textContent=String(secs.length).padStart(2,'0');
+const secIO=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    const i=secs.indexOf(e.target);
+    railLinks.forEach((a,j)=>a.classList.toggle('on',j===i));
+    document.getElementById('pgNow').textContent=String(i+1).padStart(2,'0');
+  }});
+},{threshold:.5});
+secs.forEach(s=>secIO.observe(s));
+
+/* ── 键盘翻页(PPT 式) ── */
+let cur=0;
+const upd=()=>{cur=secs.findIndex(s=>{const r=s.getBoundingClientRect();return r.top>-innerHeight/2&&r.top<innerHeight/2})};
+addEventListener('keydown',e=>{
+  if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();upd();secs[Math.min(cur+1,secs.length-1)].scrollIntoView({behavior:'smooth'})}
+  if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();upd();secs[Math.max(cur-1,0)].scrollIntoView({behavior:'smooth'})}
+});
+
+/* ── 门禁回放 ── */
+const SCRIPT=[
+  {t:'u',txt:'你是谁?'},
+  {t:'a',who:'GENERAL · 通用助手',txt:'我是通用助手,可以切换 4 个工作流角色:PM / Architect / Developer / DevOps。说"你是 PM"即可切换——在那之前,我不会擅自进入工作流。',step:0},
+  {t:'u',txt:'你是 PM,给 TODO 功能写一份 PRD'},
+  {t:'a',who:'PM · 产品经理',txt:'已切换为 PM,加载工作流。检测到项目未初始化——先快速补 3 个项目事实(名称/定位/技术栈),然后进入 PRD 创建。',step:1},
+  {t:'a',who:'PM · 产品经理',txt:'PRD 已产出:含用户故事(创建/查看/完成标记)、验收标准(正常 + 异常路径)、范围边界。当前状态:待 Review。需走 Review 流程定稿后,才能启动开发。',step:2},
+  {t:'u',txt:'PRD 写好了,直接开始开发吧'},
+  {t:'stamp',txt:'GATE · 门禁拦截'},
+  {t:'a',who:'PM · 门禁触发',gate:true,txt:'拒绝:PRD 当前状态为待 Review。按工作流门禁,必须先走 Review 流程并定稿,才能启动标准迭代开发。可以说"进入 Review"来触发流程。',step:3},
+  {t:'u',txt:'进入 Review'},
+  {t:'a',who:'REVIEW · 流程启动',txt:'Review 已启动,已指定 Review 方并在 PRD 追加 Review 记录区。通过后 PRD 定稿,即可启动开发。✅ 你刚刚体验了完整的门禁闭环:角色门禁 → Bootstrap 门禁 → Review 门禁 → 迭代门禁。',step:4},
+];
+const chat=document.getElementById('chat'),bar=document.getElementById('progBar');
+const stepEls=[...document.querySelectorAll('.step')];
+let timer=null,idx=0,playing=false;
+function reset(){clearTimeout(timer);idx=0;playing=false;chat.innerHTML='';bar.style.width='0';
+  stepEls.forEach(s=>s.classList.remove('on'));
+  document.getElementById('playBtn').textContent='▶ 播放回放'}
+function playNext(){
+  if(idx>=SCRIPT.length){playing=false;document.getElementById('playBtn').textContent='▶ 重新播放';return}
+  const m=SCRIPT[idx];
+  const tp=document.createElement('div');
+  if(m.t!=='u'){tp.className='typing';tp.innerHTML='AI 正在输入 <i>●●●</i>';chat.appendChild(tp);chat.scrollTop=chat.scrollHeight}
+  timer=setTimeout(()=>{
+    if(m.t!=='u')tp.remove();
+    const el=document.createElement('div');
+    if(m.t==='stamp'){el.className='stamp';el.textContent=m.txt}
+    else{
+      el.className='msg '+(m.t==='u'?'u':'a')+(m.gate?' gate-hit':'');
+      el.innerHTML=(m.who?'<span class="who">'+m.who+'</span>':'')+m.txt;
+    }
+    chat.appendChild(el);chat.scrollTop=chat.scrollHeight;
+    if(m.step!==undefined)stepEls.forEach((s,j)=>s.classList.toggle('on',j===m.step));
+    bar.style.width=((idx+1)/SCRIPT.length*100)+'%';
+    idx++;timer=setTimeout(playNext,m.t==='u'?700:1400);
+  },m.t==='u'?250:900);
+}
+document.getElementById('playBtn').addEventListener('click',()=>{
+  if(playing)return; if(idx>=SCRIPT.length)reset();
+  playing=true;document.getElementById('playBtn').textContent='… 播放中';playNext();
+});
+document.getElementById('resetBtn').addEventListener('click',reset);
+/* 滚动进入回放区时自动播一次 */
+let autoPlayed=false;
+new IntersectionObserver(es=>{es.forEach(e=>{
+  if(e.isIntersecting&&!autoPlayed){autoPlayed=true;setTimeout(()=>document.getElementById('playBtn').click(),600)}
+})},{threshold:.4}).observe(document.getElementById('replay'));
+</script>
+</body>
+</html>

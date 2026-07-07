@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.2
 - 当前模式：标准迭代
-- 当前阶段：部署（v0.2 生产部署 ✅ 完成，等待 Owner 验收）
+- 当前阶段：✅ 已完成（迭代关闭检查通过 + 收尾归档完成）
 - 阻塞项：无
-- 下一步入口：Owner 实测生产环境 `https://workboard.huiyiyou.cloud` → 通过后执行迭代关闭检查
+- 下一步入口：Owner 决定 v0.3 方向
 
 ## 版本列表
 
@@ -17,15 +17,13 @@
 | 版本 | 迭代记录 | PRD | UI | 设计文档 | Summary | 状态 |
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
-| v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | 待创建 | 🔧 实现（R1 进行中，含 IRC-001 数据库变更） |
+| v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
 
 ## 当前 Change Notes
 
-| Change Note | 关联工作 | 状态 | 下一步 |
-|-------------|----------|------|--------|
-| [IRC-001](iterations/v0.2-design.md#实现阶段变更记录) 数据库选型变更 SQLite → PostgreSQL | v0.2 实现 | 已落地 | DevOps 部署时按新配置（.env + PostgreSQL workboard 库）落地；归档随 v0.2 收尾 |
-| [IRC-002](iterations/v0.2-design.md#实现阶段变更记录) 会话同步双数据源（本机 + 服务器 rsync 镜像；claude_project_id 支持数组） | v0.2 实现 | 已落地 | DevOps 部署时服务器侧不设 CLAUDE_REMOTE_SOURCES；归档随 v0.2 收尾 |
-| [IRC-003](iterations/v0.2-design.md#实现阶段变更记录) 会话源兼容 Codex（仅 Claude Code + Codex 两种，source 列 + Codex 徽章） | v0.2 实现 | 已落地 | 归档随 v0.2 收尾 |
+> 活跃的 Change Note 放这里；已归档的移到对应迭代的 summary 里。
+
+- 无活跃 Change Note（3 项 IRC 均已随 v0.2 收尾归档）
 
 ## 当前非迭代工作
 
@@ -33,14 +31,16 @@
 |------|------|------|------|--------|
 | 2026-07-05 | 技术预研 / Spike | [多来源会话同步调研（Codex / Trae CN）](ad-hoc/2026-07-05-spike-multi-source-session-sync.md) | 已完成 | Owner 拍板 Codex 同步排期（v0.3 或并入 v0.2）；Trae CN 挂起 |
 | 2026-07-04 | 产品定位 / Product Brief | v0.2 UI 方案草案（项目会话视图 + 角色卡片 + 映射配置） | 已定稿 | — |
-| 2026-07-06 | 标准迭代 v0.2 | 实现阶段 R2-2 Architect Review（npm test 79/79 通过；H-1~H-3 已修正） | Architect ✅ 通过；DevOps ❌ 不通过（DH-1/DH-2 待修正） | Developer 修正 DH-1/DH-2 → DevOps 复核 |
+| 2026-07-06 | 标准迭代 v0.2 | 实现阶段 R2-2 + 部署就绪检查 + 收尾归档 | ✅ 已完成（上线 2026-07-07） | Owner 决定是否启动 v0.3 |
+| 2026-07-07 | 标准迭代 v0.2 | 迭代关闭检查 + 收尾归档 | ✅ 关闭检查通过（Owner 验收已通过） | 收尾归档完成 → Owner 决定 v0.3 方向 |
 | 2026-06-17 | 立项 / Positioning | [跨项目 Agent 工作看板立项定位](ad-hoc/2026-06-17-workboard-positioning.md) / [Review 记录](ad-hoc/2026-06-17-workboard-positioning-review.md) | 已定稿，Owner Review 1-16 全部确认 | Developer 基于定稿方案实现第一版只读看板 |
 
 ## 最近收尾摘要
 
 | 日期 | 角色 | 工作 | 结论 | 下一步入口 |
 |------|------|------|------|------------|
-| 2026-06-25 | Tester | v0.1 收尾核对 | 工作区干净；测试计划/报告、Tester 日志和生产部署收尾均已入库；已清理过期“待提交”遗留描述 | Owner 决定是否启动 v0.2 |
+| 2026-07-07 | General（机制执行） | v0.2 迭代关闭检查 + 收尾归档 | ✅ 可关闭 — Owner 验收通过；9 项关闭检查全通过；已生成 v0.2-summary.md；3 项 IRC 已归档；coordination 元信息变更台账已登记；workboard名称/功能范围 2 行 | Owner 决定 v0.3 方向（对话输入/菜单精简/迭代标签等） |
+| 2026-06-25 | Tester | v0.1 收尾核对 | 工作区干净；测试计划/报告、Tester 日志和生产部署收尾均已入库；已清理过期"待提交"遗留描述 | Owner 决定是否启动 v0.2 |
 | 2026-06-24 | PM | v0.1 迭代关闭检查 + 归档 | ✅ 可关闭（已完成）— 6 阶段定稿、生产实测通过；已生成 [v0.1-summary.md](iterations/v0.1-summary.md)、更新迭代记录与 INDEX | Owner 决定下一步（提交遗留产物 / 启动 v0.2） |
 | 2026-06-24 | DevOps | v0.1 生产部署与开发/生产隔离整改 | 已撤回错误的 8089/IP 入口和开发目录软链；生产按 `workboard.huiyiyou.cloud` 443 部署，前端 `/var/www/workboard.huiyiyou.cloud` 与后端 `/opt/workboard-prod/app` 均为独立生产目录；本机 SNI 自检 200 | Owner 配置 / 确认 `workboard.huiyiyou.cloud` DNS 指向本机后实测；通过后执行 v0.1 迭代关闭检查 |
 | 2026-06-17 | General | 新项目立项准备 | 已将定稿定位文档移动到本项目 `docs/progress/ad-hoc/`，并从 `agent-workflow` 复制团队工作流入口、baseline、templates、knowledge/progress 骨架 | Owner 切到本目录，以 Developer 角色开工 |
@@ -62,7 +62,6 @@
 | 优先级 | 待办 | 归属角色 | 来源 | 状态 |
 |--------|------|----------|------|------|
 | P2 | 会话「迭代标签」精量匹配：识别某会话属于哪个迭代下的哪个角色（如「v0.2 的 PM 会话」），与现有 `detected_role` 并列。**Developer 预研发现（2026-07-06，供 PRD 参考）**：① 靠会话开头提 vX.Y 不可行——仅 4/115（≈3%）在前 3 条消息提到、标题 0 次；② 全文任意处出现 vX.Y 的有 82/115（≈71%），33 个完全没提；③ 另一条路是时间窗匹配（会话时间范围落入迭代活跃窗），但需迭代起止日期，现有 INDEX 版本表/迭代记录里日期稀疏；④ 可复用现有角色自动识别。需 PRD 定义匹配信号、多级降级与展示形态 | PM | Owner 口述（2026-07-06，v0.2 验收中提出，明确不纳入 v0.2） | 待研究 |
-| P2 | PostgreSQL 版本化迁移机制（DevOps R2 DH-2，Owner 定 v0.3）：现 `ensureSchema` 只能幂等加表/加列/加约束，删列/改类型/回滚做不了、无版本追踪。v0.2 因库仅 3 表 + 会话/消息可重建缓存暂 YAGNI 延后。v0.3 引入轻量迁移（`src/server/migrations/*.sql` + `schema_migrations` 表按序执行，不上重型框架） | Developer | DevOps R2 Review（2026-07-06，DH-2） | 待研究 |
 | P2 | 菜单信息架构精简 5→3（Owner 已定方案 A，2026-07-06）：顶级菜单从「工作台/项目会话/部署/接入诊断/跨项目」收敛为 **「看板 / 项目会话 / 需求池」**。① **部署 + 接入诊断降级**——不再占顶级菜单，并入看板项目卡片详情抽屉的一个「接入/部署」tab（两者本质都是「每项目一行的技术健康信息」，且详情抽屉现已含接入详情 `DiagnosticDrawerContent`）；② 现「跨项目」菜单收敛为 **「需求池」**，BCR/沟通/谁等谁作为子 tab 保留；③ 看板与项目会话保留但**明确分工**——看板做横向概览+异常高亮，迭代/阶段等深入细节跳项目会话，不在两处重复维护时间轴展示；④ **生态根只读卡片钻取**（Owner 2026-07-06 追加）——项目会话视图里「公告板/框架真源」只读卡片点不进去，但 Owner 想看其「当前表现」。现状：公告板(coordination)详情**已存在于跨项目/需求池视图**（snapshot.crossProject：需求池/BCR/谁等谁/沟通），只缺卡片→详情的跳转入口；agent-workflow 详情数据薄（snapshot 仅 kindSummary 一句），要展示 baseline/版本/演进需**后端 workflow-source.js 扩展解析**。方案 A 落地时给两张只读卡片加点击钻取（公告板→需求池视图；框架真源→框架状态详情+补后端）。属 UI 信息架构重构，走 PM 定范围 → 设计 → 实现 | PM | Owner 口述（2026-07-06，v0.2 验收中提出，明确不纳入 v0.2，已定方案 A） | 待研究 |
 
 ## Bootstrap 记录
