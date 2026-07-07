@@ -1,5 +1,17 @@
 # Developer 角色日志
 
+## 2026-07-07 — 对话查看器背景层级修复
+- 本次角色：Developer（开发工程师）
+- 动作：Bugfix / UI 显示问题
+- 涉及产出：`frontend/src/app/components/EcosystemView.tsx`、`frontend/src/app/useProjectSession.ts`、`frontend/src/app/snapshot.ts`、`src/server/sync/claude-sync.js`、`docs/progress/ad-hoc/2026-07-07-bugfix-conversation-view-background.md`
+- 结论：已修复两项体验/同步问题。① 项目会话“查看对话”界面背景与周围白色页面缺少层级：对话查看器外层和消息滚动区改为浅灰画布，顶部/底部栏保留白底，消息气泡增加边框/阴影。② “同步会话”实际后端能写库，但前端不会刷新已打开的会话列表/详情：`triggerSync()` 成功后广播 `workboard:sessions-synced`，会话列表、详情、映射列表监听后自动 refetch；同步结果提示只把 full/rebuild/incremental 算更新，并显示失败文件数。同步时顺带给历史脏会话的空 `last_message_at` 增量更新增加兜底。
+- 验证：`npm --prefix frontend run build` 通过；`node --test src/server/sync/claude-sync.test.js src/server/sync/codex-parser.test.js src/server/sync/session-meta.test.js` 通过；本地 5174 服务 + Playwright mock 会话详情检查通过，控制台错误 0，对话查看器背景为 `rgb(243, 245, 248)`。全量 `npm test` 未全绿，失败为既有真实数据耦合（coordination 活跃需求计数 1≠2；本项目真实 INDEX 待办数 3≠2），非本次改动引入。
+- 关联迭代：无
+- 关联非迭代工作：2026-07-07-bugfix-conversation-view-background
+- 关联 Change Note：无
+- 下一步入口：Owner 本地/生产验收；如确认需要上线，由 DevOps 重新构建部署。
+- 收尾状态：已完成
+
 ## 2026-07-05 — v0.2 R1 验收第四批：隧道断连误报排查 + Codex 会话源支持（IRC-003）
 - 本次角色：Developer（开发工程师）
 - 动作：故障排查 ×1 + 实现阶段变更 ×1

@@ -355,7 +355,7 @@ async function syncJsonlFile(client, project, jsonlFile, { force = false, kind =
       );
       if (current.rows.length > 0) {
         const c = current.rows[0];
-        const newFirst = (firstMsgAt && firstMsgAt < c.first_message_at) ? firstMsgAt : c.first_message_at;
+        const newFirst = (firstMsgAt && (!c.first_message_at || firstMsgAt < c.first_message_at)) ? firstMsgAt : (c.first_message_at || firstMsgAt || now);
         await client.query(`
           UPDATE claude_sessions SET
             last_message_at = $1,
@@ -368,7 +368,7 @@ async function syncJsonlFile(client, project, jsonlFile, { force = false, kind =
             first_message_at = $8
           WHERE id = $9
         `, [
-          lastMsgAt || c.last_message_at,
+          lastMsgAt || c.last_message_at || now,
           messages.length, userCount, assistantCount,
           jsonlFile.mtime, data.length, now,
           newFirst, sessionId,

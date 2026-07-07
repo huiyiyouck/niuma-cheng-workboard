@@ -29,6 +29,7 @@
 
 | 日期 | 模式 | 记录 | 状态 | 下一步 |
 |------|------|------|------|--------|
+| 2026-07-07 | Bugfix / UI 显示 | [对话查看器背景层级修复](ad-hoc/2026-07-07-bugfix-conversation-view-background.md) | ✅ 已完成 | Owner 验收；如需上线由 DevOps 重新构建部署 |
 | 2026-07-05 | 技术预研 / Spike | [多来源会话同步调研（Codex / Trae CN）](ad-hoc/2026-07-05-spike-multi-source-session-sync.md) | 已完成 | Owner 拍板 Codex 同步排期（v0.3 或并入 v0.2）；Trae CN 挂起 |
 | 2026-07-04 | 产品定位 / Product Brief | v0.2 UI 方案草案（项目会话视图 + 角色卡片 + 映射配置） | 已定稿 | — |
 | 2026-07-06 | 标准迭代 v0.2 | 实现阶段 R2-2 + 部署就绪检查 + 收尾归档 | ✅ 已完成（上线 2026-07-07） | Owner 决定是否启动 v0.3 |

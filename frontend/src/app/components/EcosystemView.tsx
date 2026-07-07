@@ -192,8 +192,10 @@ function SyncBar() {
     setErr(null);
     try {
       const r = await triggerSync();
-      const changed = r.results.filter((x) => x.status !== "unchanged" && x.status !== "error").length;
-      setLastResult(`已同步 ${r.projectCount} 个项目目录，${changed} 个会话有更新 · ${new Date(r.syncedAt).toLocaleTimeString("zh-CN")}`);
+      const updated = r.results.filter((x) => ["full", "rebuild", "incremental"].includes(x.status)).length;
+      const failed = r.results.filter((x) => x.status === "error").length;
+      const suffix = failed > 0 ? `，${failed} 个文件失败` : "";
+      setLastResult(`已同步 ${r.projectCount} 个项目目录，${updated} 个会话有更新${suffix} · ${new Date(r.syncedAt).toLocaleTimeString("zh-CN")}`);
     } catch (e) {
       setErr(String((e as Error)?.message ?? e));
     } finally {
@@ -1172,9 +1174,9 @@ export function ConversationView({ sessionId, onClose }: { sessionId: string; on
   const { data, loading, error } = useSessionDetail(sessionId);
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[#f3f5f8] flex flex-col">
       {/* 顶部栏 */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border flex-shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-white shadow-sm flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground">
             <X className="h-4 w-4" />
@@ -1191,13 +1193,13 @@ export function ConversationView({ sessionId, onClose }: { sessionId: string; on
       </div>
 
       {/* 对话区 */}
-      <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex-1 overflow-y-auto bg-[#f3f5f8] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {loading ? (
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-4 max-w-4xl mx-auto">
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="space-y-2">
-                <div className="h-3 w-20 bg-[#030213]/[0.06] rounded animate-pulse" />
-                <div className="h-16 bg-[#030213]/[0.04] rounded animate-pulse" />
+                <div className="h-3 w-20 bg-[#030213]/[0.08] rounded animate-pulse" />
+                <div className="h-16 bg-white border border-border/70 rounded-lg animate-pulse" />
               </div>
             ))}
           </div>
@@ -1213,7 +1215,7 @@ export function ConversationView({ sessionId, onClose }: { sessionId: string; on
       </div>
 
       {/* 底部只读提示 */}
-      <div className="px-5 py-3 border-t border-border bg-[#f6f7f9] flex-shrink-0">
+      <div className="px-5 py-3 border-t border-border bg-white flex-shrink-0">
         <p className="text-xs text-muted-foreground text-center">
           只读模式 · v0.3+ 将支持直接在此输入消息
         </p>
@@ -1271,7 +1273,7 @@ function MessageBubble({ msg }: { msg: ClaudeMessage }) {
             </span>
             <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleString("zh-CN")}</span>
           </div>
-          <div className="rounded-lg px-3 py-2 text-xs leading-relaxed font-mono whitespace-pre-wrap break-alls bg-purple-50/50 text-purple-900 border border-purple-100">
+          <div className="rounded-lg px-3 py-2 text-xs leading-relaxed font-mono whitespace-pre-wrap break-all bg-white text-purple-900 border border-purple-100 shadow-sm">
             {content}
           </div>
         </div>
@@ -1290,8 +1292,8 @@ function MessageBubble({ msg }: { msg: ClaudeMessage }) {
           </span>
           <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleString("zh-CN")}</span>
         </div>
-        <div className={`rounded-lg px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
-          isUser ? "bg-blue-50 text-blue-900" : "bg-[#f6f7f9] text-foreground border border-border/60"
+        <div className={`rounded-lg px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
+          isUser ? "bg-blue-50 text-blue-900 border border-blue-100" : "bg-white text-foreground border border-border/70"
         }`}>
           {renderContent()}
         </div>

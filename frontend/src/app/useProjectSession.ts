@@ -13,6 +13,7 @@ import type {
 } from "./snapshot";
 
 const API_BASE = "";
+const SESSION_SYNC_EVENT = "workboard:sessions-synced";
 
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, {
@@ -24,6 +25,14 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
     throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
   }
   return res.json() as Promise<T>;
+}
+
+function useRefetchOnSessionSync(load: () => void) {
+  useEffect(() => {
+    const onSynced = () => { void load(); };
+    window.addEventListener(SESSION_SYNC_EVENT, onSynced);
+    return () => window.removeEventListener(SESSION_SYNC_EVENT, onSynced);
+  }, [load]);
 }
 
 // ─── 会话列表 hook ──────────────────────────────────────────────────────────
@@ -57,6 +66,7 @@ export function useSessionList(params: {
   }, [params.projectId, params.status, params.limit, params.offset]);
 
   useEffect(() => { load(); }, [load]);
+  useRefetchOnSessionSync(load);
 
   return { data, loading, error, refetch: load };
 }
@@ -83,6 +93,7 @@ export function useSessionDetail(sessionId: string | null) {
   }, [sessionId]);
 
   useEffect(() => { load(); }, [load]);
+  useRefetchOnSessionSync(load);
 
   return { data, loading, error, refetch: load };
 }
@@ -109,6 +120,7 @@ export function useMappingList(projectId?: string) {
   }, [projectId]);
 
   useEffect(() => { load(); }, [load]);
+  useRefetchOnSessionSync(load);
 
   return { data, loading, error, refetch: load };
 }
@@ -138,7 +150,9 @@ export async function deleteMapping(sessionId: string): Promise<void> {
 // ─── 触发同步 ──────────────────────────────────────────────────────────────
 
 export async function triggerSync(): Promise<SyncResult> {
-  return apiFetch<SyncResult>("/api/sync", { method: "POST" });
+  const result = await apiFetch<SyncResult>("/api/sync", { method: "POST" });
+  window.dispatchEvent(new CustomEvent(SESSION_SYNC_EVENT, { detail: result }));
+  return result;
 }
 
 // ─── 迭代时间轴：版本列表 hook ──────────────────────────────────────────────

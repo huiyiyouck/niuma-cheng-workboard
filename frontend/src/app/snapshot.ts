@@ -234,7 +234,15 @@ export interface MappingListResponse {
 export interface SyncResult {
   syncedAt: string;
   projectCount: number;
-  results: { projectId: string; projectName: string; sessionId: string; status: string; messageCount?: number }[];
+  results: {
+    projectId?: string;
+    projectName?: string;
+    source?: string;
+    sessionId?: string;
+    status: string;
+    messageCount?: number;
+    error?: string;
+  }[];
 }
 
 // ─── v0.2：迭代时间轴相关类型 ───────────────────────────────────────────────
