@@ -203,6 +203,21 @@
   .evo li:last-child{border-bottom:0}
   .evo b{color:var(--pink);font-family:var(--mono);font-size:12px;margin-right:10px}
 
+  /* ═══ S-board 看板 IDE ═══ */
+  .vchips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+  .vchips .vc{font-family:var(--mono);font-size:12.5px;padding:8px 16px;border-radius:99px;
+    border:1px solid var(--card-edge);color:var(--ink-dim);background:rgba(21,16,48,.55)}
+  .vchips .vc b{color:var(--purple-hi);font-weight:600;margin-right:6px}
+  .feats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .feat .ico{font-size:22px}
+  .feat b{display:block;font-size:16px;margin:8px 0 6px}
+  .feat p{font-size:13.5px;color:var(--ink-dim)}
+  .roadmap{margin-top:26px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-dim)}
+  .roadmap .r{border:1px dashed var(--card-edge);border-radius:8px;padding:6px 14px}
+  .roadmap .r.now{border-style:solid;border-color:var(--green);color:var(--green)}
+  @media(max-width:900px){.feats{grid-template-columns:1fr}}
+
   /* ═══ S5 活证据 ═══ */
   .proof{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
   .proof .card{transition:.25s}
@@ -236,10 +251,18 @@
 
   @media(max-width:900px){
     .rail,.keyhint{display:none}
-    .roles,.pains,.proof,.doors{grid-template-columns:1fr}
+    .pains,.doors{grid-template-columns:1fr}
+    .roles,.proof{grid-template-columns:1fr 1fr}
+    .role{padding:16px 14px}
     .replay{grid-template-columns:1fr}
     .org{grid-template-columns:1fr}
-    section{padding:72px 18px}
+    section{padding:64px 18px}
+    .lede{margin-bottom:30px}
+    .pipe{flex-direction:column;gap:8px}
+    .parrow{display:none}
+    .pnode{padding-top:18px}
+    .hero-stats{gap:14px}
+    .hero-stats .st{border-right:0;padding:0 8px;flex:1 1 38%}
   }
 </style>
 </head>
@@ -252,6 +275,7 @@
   <a href="#flow"><span class="lbl">工作流层</span><span class="dot"></span></a>
   <a href="#replay"><span class="lbl">门禁实录</span><span class="dot"></span></a>
   <a href="#org"><span class="lbl">组织架构层</span><span class="dot"></span></a>
+  <a href="#board"><span class="lbl">看板 IDE</span><span class="dot"></span></a>
   <a href="#proof"><span class="lbl">活证据</span><span class="dot"></span></a>
   <a href="#doors"><span class="lbl">体验入口</span><span class="dot"></span></a>
 </nav>
@@ -275,7 +299,7 @@
     <div class="hero-stats">
       <div class="st"><b>4</b><span>角色分工</span></div>
       <div class="st"><b>5</b><span>道硬门禁</span></div>
-      <div class="st"><b>3</b><span>个真实上线项目</span></div>
+      <div class="st"><b>3</b><span>个真实项目在跑</span></div>
       <div class="st"><b>10+</b><span>次框架自我修正</span></div>
     </div>
   </div>
@@ -311,16 +335,19 @@
     </div>
     <div class="card rv d2">
       <div class="pipe">
-        <div class="pnode"><div class="bx">PRD 创建</div></div>
+        <div class="pnode"><div class="bx">PRD</div></div>
         <div class="parrow">→</div>
         <div class="pnode gate"><span class="g">不审不定稿</span><div class="bx">Review</div></div>
         <div class="parrow">→</div>
-        <div class="pnode"><div class="bx">定稿</div></div>
+        <div class="pnode"><div class="bx">设计</div></div>
         <div class="parrow">→</div>
-        <div class="pnode gate"><span class="g">无PRD不开工</span><div class="bx">开发实现</div></div>
+        <div class="pnode gate"><span class="g">无定稿不开工</span><div class="bx">实现 + 自测</div></div>
         <div class="parrow">→</div>
-        <div class="pnode gate"><span class="g">不自测不部署</span><div class="bx">部署上线</div></div>
+        <div class="pnode gate"><span class="g">不自测不部署</span><div class="bx">部署检查</div></div>
+        <div class="parrow">→</div>
+        <div class="pnode"><div class="bx">迭代关闭</div></div>
       </div>
+      <p style="font-size:12.5px;color:var(--ink-faint);margin-top:16px">每个迭代走完整六阶段流水线;阶段状态(已定稿 / 进行中 / 阻塞)在看板时间轴上逐段可查。</p>
     </div>
   </div>
 </section>
@@ -403,20 +430,49 @@
   </div>
 </section>
 
-<!-- ═══ S5 活证据 ═══ -->
+<!-- ═══ S5 看板 · Web 端项目迭代 IDE ═══ -->
+<section id="board">
+  <div class="wrap">
+    <div class="kicker rv">THE CONSOLE · WORKBOARD v0.2</div>
+    <h2 class="rv">看板,已经长成<br>「Web 端项目迭代 IDE」</h2>
+    <p class="lede rv">v0.1 是只读聚合看板;v0.2 把生态全局、迭代进度、每一句 AI 对话装进同一个页面。严格只读、不回写任何项目——看得全,但不越权。</p>
+    <div class="vchips rv d1">
+      <span class="vc"><b>01</b>工作台</span>
+      <span class="vc"><b>02</b>项目会话</span>
+      <span class="vc"><b>03</b>跨项目</span>
+      <span class="vc"><b>04</b>部署</span>
+      <span class="vc"><b>05</b>接入诊断</span>
+    </div>
+    <div class="feats">
+      <div class="card feat rv d1"><span class="ico">🧭</span><b>生态分层钻取</b><p>打开即是生态根总览:参谋长席位、框架真源与公告板摘要、三个子项目卡片;点卡片钻取进单项目,面包屑一键返回。</p></div>
+      <div class="card feat rv d2"><span class="ico">🔗</span><b>角色—会话映射</b><p>每个项目的 5 个角色(PM / Architect / Developer / DevOps / General)+ 生态根参谋长席位,各自绑定一条真实开发会话(Claude Code / Codex 双源,带来源徽章);配角色自动识别辅助标注,映射持久化、可随时换绑。</p></div>
+      <div class="card feat rv d3"><span class="ico">💬</span><b>对话只读回放</b><p>点开任意已映射的角色卡,按时间顺序完整回放该角色的全部对话,Markdown 渲染——PM 怎么写 PRD、Review 怎么打回,一句不落。</p></div>
+      <div class="card feat rv d4"><span class="ico">🧵</span><b>双层迭代时间轴</b><p>上层:项目迭代总览轴(v0.1 → v0.N);下层:单个迭代的六阶段流水线。已完成的看产出摘要,进行中的看卡在哪;点开阶段抽屉,还能一键跳到「当时的对话」。</p></div>
+      <div class="card feat rv d2" style="grid-column:1/-1"><span class="ico">♻️</span><b>生产数据自动同步</b><p>生产服务器定时拉取各项目仓库,看板数据始终新鲜;同步异常和数据最后更新时间在接入诊断视图里直接可见,坏了不装死。</p></div>
+    </div>
+    <div class="roadmap rv d3">
+      <span class="r">v0.1 只读聚合看板</span>→
+      <span class="r now">v0.2 会话回放 + 双层时间轴(已上线)</span>→
+      <span class="r">v0.3 映射完整管理 + 页面输入</span>
+    </div>
+    <p class="rv d4" style="margin-top:16px;font-size:13.5px;color:var(--ink-dim)">终态规划 · <b style="color:var(--purple-hi)">Web Agent Console 统一角色工作台</b>:在网页上选项目、选角色、直接对话,后端在对应项目目录驱动 CLI Agent 并注入角色语义,输出实时回显、权限确认在线完成——把"cd 进目录 + 打开 CLI + 输入你是某角色"收敛成一个页面。</p>
+  </div>
+</section>
+
+<!-- ═══ S6 活证据 ═══ -->
 <section id="proof">
   <div class="wrap">
     <div class="kicker rv">LIVING PROOF</div>
-    <h2 class="rv">不是方法论 PPT,<br>是三个真实上线的项目在用它</h2>
+    <h2 class="rv">不是方法论 PPT,<br>是三个真实项目在用它</h2>
     <p class="lede rv">这套系统每天在生产环境里跑。看板上的需求池、BCR、版本游标,全部是真实项目运转产生的数据,不是演示数据。</p>
     <div class="proof">
       <div class="card rv d1"><span class="ico">📰</span><b>牛马程小报</b><p>AI 多源新闻聚合平台,抓取调度 / 分类 / 评分加权</p><div class="st"><span class="live">news.huiyiyou.cloud</span></div></div>
-      <div class="card rv d2"><span class="ico">📊</span><b>跨项目看板</b><p>聚合所有项目的角色状态、需求池、阻塞与会话记录</p><div class="st"><span class="live">workboard.huiyiyou.cloud</span></div></div>
+      <div class="card rv d2"><span class="ico">📊</span><b>跨项目看板</b><p>Web 端项目迭代 IDE:五视图 + 会话回放 + 双层时间轴(v0.2)</p><div class="st"><span class="live">workboard.huiyiyou.cloud</span></div></div>
       <div class="card rv d3"><span class="ico">🤖</span><b>AI 处理中枢</b><p>生态内统一的评分 / 标签 / 摘要服务,小报的 L1 评分由它承担</p><div class="st"><span class="tag">v0.1 已交付 · 内部服务</span></div></div>
     </div>
     <div class="viewer-hi rv d4">
-      <b class="h">🔍 最新迭代:在看板里回放真实的 AI 协作会话</b>
-      <p>看板 v0.2 新增「项目会话视图 + 对话查看器 + 双层时间轴」——每一轮迭代里,PM 怎么写 PRD、Review 怎么打回、开发怎么修复,<b style="color:var(--green)">原始对话可以直接点开看</b>。整个开发过程全程可审计,这就是"可治理的 AI 编程"最直接的样子。</p>
+      <b class="h">🔁 最硬的证据:v0.2 就是用这套工作流自己跑出来的</b>
+      <p>这次升级本身走了完整六阶段流水线:实现阶段被 Architect Review <b style="color:var(--red)">打回一次(3 高 + 5 中)</b>,修复后复审通过;DevOps 独立检查又拦下部署配置问题,再修复才放行——<b style="color:var(--green)">打回记录和当时的对话,现在都能在看板里点开看</b>。门禁不是摆设,系统在用自己治理自己。</p>
     </div>
   </div>
 </section>
@@ -428,8 +484,8 @@
     <h2 class="rv">三个入口,按深度递进</h2>
     <div class="doors">
       <a class="door rv d1" href="https://workboard.huiyiyou.cloud" target="_blank">
-        <span class="n">01 · 看结果</span><b>线上看板</b>
-        <p>直接访问。推荐路径:项目总览 → 会话回放 → 需求池/BCR。2 分钟。</p>
+        <span class="n">01 · 看结果</span><b>线上看板(项目迭代 IDE)</b>
+        <p>直接访问。推荐路径:工作台总览 → 项目会话点开一条对话回放 → 双层时间轴看六阶段进度。2 分钟。</p>
       </a>
       <!-- 【回填】录屏上线后把 href 换成视频链接,并删除 class 里的 soon -->
       <a class="door soon rv d2" href="#" onclick="return false">
