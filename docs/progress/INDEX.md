@@ -4,11 +4,11 @@
 
 ## 当前项目状态
 
-- 当前迭代：v0.2.1
+- 当前迭代：v0.3
 - 当前模式：标准迭代
 - 当前阶段：PRD 阶段 R1 待Review（Architect + Developer）
 - 阻塞项：无
-- 下一步入口：Owner 切到 Architect / Developer 角色 Review `v0.2.1-prd.md`
+- 下一步入口：Owner 切到 Architect / Developer 角色 Review `v0.3-prd.md`
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.2.1 | [v0.2.1.md](iterations/v0.2.1.md) | [v0.2.1-prd.md](iterations/v0.2.1-prd.md) | 并入 PRD | — | — | 🔄 进行中（PRD 阶段 R1 待Review） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | — | — | 🔄 进行中（PRD 阶段 R1 待Review） |
 
 ## 当前 Change Notes
 
