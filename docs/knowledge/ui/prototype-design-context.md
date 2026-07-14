@@ -35,6 +35,9 @@
 
 ## 三、生成约定（喂 design agent 的规则）
 
+### 怎么把本文档喂给 design agent
+design agent **可直接读取本文档的 GitHub 版本**（`huiyiyouck/niuma-cheng-workboard` 仓 `docs/knowledge/ui/prototype-design-context.md`）——**2026-07-14 实测通过**（design 读到并按它把迭代时间轴一次补对）。**优先让它读 GitHub（免手动贴）、读不到再手动贴全文**；真源在 git，design 只读不写。
+
 ### design 沙盒 ≠ frontend 生产（四层不兼容，来自 PRD §7）
 原型图是**高保真视觉 + 交互蓝本，不是可部署代码**：沙盒用 `window.React` / design 自建 `lib/*` 与 primitives / `sampleData` 演示数据 / design 运行时——与 `frontend/`（Vite + 标准 import + `lucide-react` + shadcn/ui + 真实 `/api/snapshot`）四层不兼容。**原型图留存作视觉蓝本，实现时 Developer 翻译（保留 Tailwind className + 交互逻辑），后端从零。**
 
@@ -79,4 +82,4 @@
 
 - ✅ **抽屉版对话查看器**（左菜单 + 当前/历史 + 选择即当前）：读回验证做对。
 - ✅ 菜单 5→3、需求池四子 tab、看板待办折叠、项目详情抽屉：已在原型图。
-- ⚠️ **迭代时间轴未做进 `WorkboardAppV21` 第一级**：design agent 反复假完成（声称改了、`WorkboardAppV21.tsx` 一字未动）。**已定：以 PRD US-13 + v0.2 现网 `IterationTimeline` 组件为准，原型图画不画不影响实现**（实现直接复用 v0.2 组件 + 挪位置 + 阶段钻取改开抽屉）。此项不再死磕 design agent。
+- ✅ **迭代时间轴已做进 `WorkboardAppV21` 第一级**（2026-07-14 PM 读回验证通过）：新增 `shell/IterationTimeline.tsx`（双层：版本总览轴状态圆点 + 阶段门禁五关 + 阶段「查看对话」定位责任角色）+ `lib/iterationSample.js`；`WorkboardAppV21` 接入两分支（未选→项目卡网格 / 选中→时间轴）+ `ConversationViewer` 加 `initialRole`。此轮 design agent **直接读取本文档的 GitHub 版本**作上下文完成，未假完成（对比前几轮的假完成，喂对上下文 + 反假完成提示后一次做对）。
