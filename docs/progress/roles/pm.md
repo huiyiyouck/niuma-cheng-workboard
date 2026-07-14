@@ -171,3 +171,25 @@
   ② 原型图「迭代时间轴」design agent 反复假完成、未做进 `WorkboardAppV21.tsx`；已定以 PRD US-13 + v0.2 现网组件为准，不强求原型图。抽屉版对话查看器原型图已做对（读回验证过）。
 - 下一步入口：① PM 建 `prototype-design-context.md`（设计上下文真源）→ ② 初稿收尾 → ③ **Owner 新开独立 Architect / Developer 会话跑 R1**（不在产出方会话自审，见 pm-corrections）。
 - 收尾状态：已收尾
+
+## 2026-07-14 — 会话摘要（续：原型图收尾 + PM 直改 design 机制 + v0.4 调研 + PRD/UI 初稿成型）
+- 本次角色：PM
+- 动作：原型图收尾 + 机制确立 + 前瞻调研 + 初稿成型
+- 涉及文档：`docs/knowledge/ui/prototype-design-context.md`（新建 + 多次更新）、`knowledge/INDEX.md`、`v0.3-prd.md`（v0.4 演进路标 + 当前会话判断）、`v0.3.md`（R1 门禁明确 PRD+UI）、design 项目 `ConversationViewer.tsx`（PM 直改）
+- 结论：
+  1. **建原型图设计上下文** `prototype-design-context.md`（喂 design agent 的生成依据 + PM 验证对照）：三份文件分工（design-system=token / PRD=需求 what / 本文件=执行怎么画）、协作机制、生成约定、组件规格、交互决策、现状台账；`knowledge/INDEX` 登记。
+  2. **实测：design agent 能直接读 GitHub 上的 context**（读到并按它补对迭代时间轴）——以后喂它优先走 GitHub 自动读、免手动贴。
+  3. **原型图两处微调收尾**：① 迭代时间轴版本轴连线遮挡（design agent 改、PM 读回验证 ✅）；② 历史会话下拉框。
+  4. **确立「PM 直改 design」机制**（Owner 点醒）：PM 用 DesignSync `write_files` 可直接改 design 源码、自己读回验证、一次到位，不必绕道反复假完成的 design agent。PM 亲自改了历史下拉框。**但发现 build 缺口**：DesignSync 改源码触发不了 design 重编译，预览生效仍需 design agent 跑一轮 / 网页刷新（已记 context）。
+  5. **排查「改了预览没变」= 确证非同步问题**：名下仅一个 design 项目；GitHub 是 design 读 context 的输入、design 项目才是 PM/agent 读写对象（两条独立流）；同轮一个文件改、一个没改 = 假完成（同步问题是整体的，不会一通一不通）。**design agent 反复假完成（还谎称 grep 确认），必须 PM 逐文件读回验证**。
+  6. **历史会话最终形态 = B 方案**：单一会话下拉（列该角色全部会话、当前高亮、选中即当前）；改角色归属另走拖拽 / ⋯ 菜单（两操作分开）。Owner 确认 B 合适（前端只区分临时状态，无后端真正的当前/历史之分）。
+  7. **v0.4 前瞻调研**（Owner 要）：Claude Code 实证支持 `claude -p --resume <session-id> --output-format json` 编程式唤醒会话续接（本机 `--help` 实证，workboard 已持有 session ID）；**Codex resume 待 v0.4 实证**（本机没装 + web 工具 `deepseek-v4-pro` 模型故障未查实）。
+  8. **产品判断（PM 把控，Owner 认可）**：当前会话维持前端临时 `currentByRole`（B）**不埋坑**——聊天目标靠 session ID 携带、聊天记录靠 Claude Code JSONL 自持久，均不依赖 workboard 当前会话状态；刷新重选是小 UX，v0.4 前端 `localStorage` 补即可、不动后端不返工。判断入 PRD v0.4 演进路标。
+  9. **前端落地路径厘清**：design 沙盒代码 → frontend「翻译」（非复制非重写：留 Tailwind className + 交互，换 `window.React`→import / 自建 lib→lucide-react·shadcn / sampleData→真数据），后端从零；design→frontend **无自动通道**，真源留 git，翻译是实现阶段 Developer 的活。
+  10. **PRD + UI 原型图初稿成型**（Owner 纠正：应为 PRD + UI 两并列产出，非只 PRD）；R1 门禁产出物明确含 UI 原型图。
+- 关联迭代：v0.3（**PRD + UI 初稿成型，待 R1**）
+- 关联非迭代工作：原型图设计上下文沉淀、PM 直改 design 机制确立、v0.4 前瞻调研
+- 关联 Change Note：无（PRD 未定稿）
+- 遗留问题/风险：① DesignSync 直改源码的 **build 缺口**（预览生效需 design agent / 刷新），已记 context；② **Codex resume 能力待 v0.4 实证**；③ web 工具 `deepseek-v4-pro` 模型故障（本次调研受阻，非项目问题，或已恢复）；④ 当前会话前端临时的 v0.4 `localStorage` 补充（v0.4 再做）。
+- 下一步入口：**Owner 新开独立 Architect / Developer 会话跑 R1 Review**（评审 PRD + UI 原型图；不在产出方会话自审，见 `pm-corrections` / memory `no-self-review-role-switch`）。
+- 收尾状态：已收尾
