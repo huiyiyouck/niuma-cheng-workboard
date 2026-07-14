@@ -25,7 +25,7 @@
 |----|----|----|
 | ① 设计方案 | **PM** | 出界面方案、写 design 规格、读回验证。BCR-004 已把界面要点并入 PM |
 | ② 方向决策 + 评判 | **Owner** | 拍板方向（抽屉？选择即当前？）、判断好不好、提意见 |
-| ③ 执行画图 | **PM 自己（DesignSync `write_files`，首选）** 或 design agent（备选、不可靠） | PM 能直接 `get_file` 读、`write_files` 写 design 文件——**自己改、自己读回验证，一次到位**（首次审批一下写入计划即可）；design agent 反复假完成，仅批量新建时备选，且必须 PM 读回验证 |
+| ③ 执行画图 | PM 直改源码（DesignSync `write_files`）+ design 侧触发 build | PM 能 `get_file`/`write_files` 直接改 design **源文件**并读回验证；**但 DesignSync 触发不了 design 重编译（build）——预览生效仍需 design agent 跑一轮或在 design 网页刷新**（2026-07-14 实测：PM 写了源码但预览未更新，最终由 design agent build 生效）。故：小改 PM 直写源码 + design 侧 build 生效；design agent 仍必经 PM 读回验证（反复假完成） |
 
 **设计真源 = PRD 界面要点 + 线框（PM 把控、可靠）；原型图 = 可选可视化辅助**（画不对不强求，实现照 PRD + `frontend/` 现网代码）。**每轮改完必读回验证**——不然一句"改好了"就带过去了，实现阶段才发现原型图和代码对不上。
 
