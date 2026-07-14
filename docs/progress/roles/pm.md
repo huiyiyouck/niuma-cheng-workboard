@@ -151,3 +151,23 @@
 - 遗留问题/风险：① 迭代时间轴解析复杂度（实现阶段处理）；② 生产数据源同步稳定性（部署阶段落地）；③ 缓存一致性时差/首次全量同步性能/JSONL 格式变更（设计阶段细化方案）；④ workboard 改名台账（关闭检查阶段处理）。
 - 下一步入口：R1 Review 阻塞项已全部解除，可启动 R2 复审（Architect + Developer）。
 - 收尾状态：未收尾
+
+## 2026-07-14 — 会话摘要（v0.3 PRD 初稿打磨 + 原型图协作机制梳理）
+- 本次角色：PM
+- 动作：产出 + 打磨 + 机制梳理
+- 涉及文档：`docs/progress/iterations/v0.3-prd.md`（大幅打磨，已 push `4c63c25`）、`v0.3.md`（概览/门禁订正）、`pm-corrections.md`（新增自审纠错）、memory `no-self-review-role-switch.md`、coordination `REQUESTS.md`（BCR-013 关闭 / BCR-014 提报）
+- 结论：
+  1. v0.3 从 v0.2.1 起步 → 收敛为 **5 组 13 US**（A 对话查看器 / B 匹配 / C 菜单 / D 看板 / E 部署）。
+  2. **对话查看器收敛为抽屉版**：右侧抽屉(~72%) + 左侧角色菜单 + 当前/历史会话 + **选择即当前**（点会话即成当前、无「设为当前」按钮；`currentByRole` 前端临时、不持久、刷新回最新）。
+  3. **匹配闭环**（解析侧治理，依 BCR-013，agent-workflow 框架不改）：角色维 `detectRole` 改进 + 兜底 General、拖拽打标签 `manualRole`、1:N（一角色多会话）、Codex 多来源、迭代维 INDEX-git-history 重建。
+  4. **补 US-13 迭代时间轴**：保留 v0.2 `IterationTimeline`（双层：版本总览轴 + 阶段门禁），置于项目会话第一级，阶段「查看对话」钻取改为打开抽屉。
+  5. **原型图协作机制梳理**（Owner 要求）：设计 = PM 把控、决策 = Owner、执行 = design agent（claude.ai/design 另一 agent，不可靠、反复假完成）；**设计真源 = PRD 界面要点 + 线框，原型图 = 可选可视化辅助**（画不对不强求，实现照 PRD + v0.2 现网代码）。
+  6. **流程纠错**：PM 写完 PRD 后误在同会话切 Architect 审自己（自审）→ 当场纠正、切回 PM、记 pm-corrections + memory + 提 BCR-014（框架护栏缺失）。
+- 关联迭代：v0.3（PRD 初稿打磨中，**未进 R1**）
+- 关联非迭代工作：原型图协作机制梳理、BCR-013/014
+- 关联 Change Note：无（PRD 未定稿）
+- 遗留问题/风险：
+  ① **待建** `docs/knowledge/ui/prototype-design-context.md`（原型图设计上下文/生成依据，Owner 已认可方案——设计系统 v2.0 token + 生成约定 + 各界面组件规格汇总 + 关键交互决策；由 PM 整理，作为喂 design agent 的统一依据 + 验证对照。本次上下文将满未动手，留下次）。
+  ② 原型图「迭代时间轴」design agent 反复假完成、未做进 `WorkboardAppV21.tsx`；已定以 PRD US-13 + v0.2 现网组件为准，不强求原型图。抽屉版对话查看器原型图已做对（读回验证过）。
+- 下一步入口：① PM 建 `prototype-design-context.md`（设计上下文真源）→ ② 初稿收尾 → ③ **Owner 新开独立 Architect / Developer 会话跑 R1**（不在产出方会话自审，见 pm-corrections）。
+- 收尾状态：已收尾
