@@ -25,7 +25,7 @@
 |----|----|----|
 | ① 设计方案 | **PM** | 出界面方案、写 design 规格、读回验证。BCR-004 已把界面要点并入 PM |
 | ② 方向决策 + 评判 | **Owner** | 拍板方向（抽屉？选择即当前？）、判断好不好、提意见 |
-| ③ 执行画图 | **design agent**（claude.ai/design 里另一个 agent，不可靠） | 按规格画；**会假完成**（回"改好了"但文件没动），必须 PM 读回验证 |
+| ③ 执行画图 | **PM 自己（DesignSync `write_files`，首选）** 或 design agent（备选、不可靠） | PM 能直接 `get_file` 读、`write_files` 写 design 文件——**自己改、自己读回验证，一次到位**（首次审批一下写入计划即可）；design agent 反复假完成，仅批量新建时备选，且必须 PM 读回验证 |
 
 **设计真源 = PRD 界面要点 + 线框（PM 把控、可靠）；原型图 = 可选可视化辅助**（画不对不强求，实现照 PRD + `frontend/` 现网代码）。**每轮改完必读回验证**——不然一句"改好了"就带过去了，实现阶段才发现原型图和代码对不上。
 
@@ -83,6 +83,6 @@ design agent **可直接读取本文档的 GitHub 版本**（`huiyiyouck/niuma-c
 - ✅ **抽屉版对话查看器**（左菜单 + 当前/历史 + 选择即当前）：读回验证做对。
 - ✅ 菜单 5→3、需求池四子 tab、看板待办折叠、项目详情抽屉：已在原型图。
 - ✅ **迭代时间轴已做进 `WorkboardAppV21` 第一级**（2026-07-14 PM 读回验证通过）：新增 `shell/IterationTimeline.tsx`（双层：版本总览轴状态圆点 + 阶段门禁五关 + 阶段「查看对话」定位责任角色）+ `lib/iterationSample.js`；`WorkboardAppV21` 接入两分支（未选→项目卡网格 / 选中→时间轴）+ `ConversationViewer` 加 `initialRole`。此轮 design agent **直接读取本文档的 GitHub 版本**作上下文完成，未假完成（对比前几轮的假完成，喂对上下文 + 反假完成提示后一次做对）。
-- 🔧 **v0.3 微调（2026-07-14 Owner 看原型图后提，待改）**：
-  ① `IterationTimeline` 版本轴**连线对齐圆点那一行**——现连线落在版本号那行、与版本号/状态标穿插遮挡。
-  ② `ConversationViewer` **历史会话从平铺列表改为下拉框**——右侧顶部只留当前会话一行 + 历史 ▾ 下拉（选择即当前），腾出正文空间；左边已是角色菜单，右边不再摊历史列表。
+- ✅ **v0.3 微调已收尾（2026-07-14）**：
+  ① `IterationTimeline` 版本轴连线对齐圆点行、遮挡消除（design agent 改，PM 读回验证 ✅）。
+  ② `ConversationViewer` 历史会话改为下拉框（当前会话一行 + 「历史(N) ▾」独立下拉、点选即当前 `setCurrent`、与改角色 ⌄ 分开）——**PM 用 DesignSync `write_files` 直接改、当场读回验证 ✅**（design agent 此处两次假完成，改由 PM 亲自改）。
