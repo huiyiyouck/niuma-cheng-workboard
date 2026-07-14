@@ -6,6 +6,8 @@
 
 ## UI（界面）
 
+- [workboard 原型图设计上下文](ui/prototype-design-context.md)：claude.ai/design 原型图的生成依据 + 验证对照——协作机制（PM 设计 / Owner 决策 / design agent 执行）+ 沙盒约定 + 各组件设计规格 + 交互决策 + 现状台账。设计 token 见 `ui/design-system.md`。
+
 ## Architecture（架构）
 
 - [Web Agent Console 统一角色工作台架构规划](architecture/web-agent-console-roadmap.md)：长期方向，把项目/角色 CLI Agent 会话统一到 workboard Web 中管理；不纳入 v0.1 只读看板范围。
