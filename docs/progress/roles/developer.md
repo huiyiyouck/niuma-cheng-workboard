@@ -1,5 +1,17 @@
 # Developer 角色日志
 
+## 2026-07-18 — v0.3 设计阶段 R1 Developer Review
+- 本次角色：Developer（开发工程师）
+- 动作：被指定为设计阶段 R1 Review 方（独立冷启动会话）
+- 涉及产出：`v0.3-design.md`（文末追加 Developer R1 Review）、`v0.3.md`（门禁表 + Review 记录）、`INDEX.md`（当前阶段/版本表）
+- 结论：**✅ 通过**（存储模型/API 契约/.git 解析/前端状态模型均可落地，无阻塞项）。
+- 独立读代码核实：① M-1 路径 A（`manual_role` 落列 + `coalesce` 归类 + `session_mappings` 废弃 + 002 迁移）决策认同；② `detected_role` 入库确为字符串 `'Unknown'`（`claude-sync.js:397`），设计 `nullif(detected_role,'Unknown')` 兼容假设成立；③ 全新库迁移链健壮（`001_init.sql:45` 建表 → 002 UPDATE→DROP，版本顺序保证）；④ API 契约照现有硬匹配路由（`index.js:90-122`）可无歧义新增/改造，废弃/改造目标 handler 位置属实。
+- **核心发现 DEV-M1（中，不阻塞）**：设计 §6 对 schema 初始化机制认知偏差——`ensureSchema`→`runSchemaDDL`（`db.js:81`，内联建三张表）**不在 HTTP/启动读路径**（`index.js` 只调 `applyMigrations`），只被 `claude-sync.js:438/497` 在 **sync 时**调。设计说「删 runSchemaDDL 段否则每次启动重建」触发点错（应为「每次 sync」，照重启验证会测漏），且未点破 migrations(001) 与 runSchemaDDL 是两套重复 schema 真源。建议实现前订正 §6；最小闭环=删 `runSchemaDDL` session_mappings 段（`db.js:125-145`）+ 与 002 同轮次落；可选根治=claude-sync 改走 applyMigrations 退役内联 DDL。
+- 另 DEV-L1（低·US-5 每 commit 一次 `git show` 子进程首次偏慢，可 `git log -p` 优化）、DEV-L2（低·`/api/communications/detail` 出参 `sourcePath` 绝对路径不宜透前端）。
+- 关联迭代：v0.3（设计阶段 R1）
+- 下一步入口：DevOps R1 Review；两方通过后由 Architect 判断是否进「修改中」订正 §6（DEV-M1），再定稿进实现阶段。实现阶段自留：DEV-M1 的 runSchemaDDL 清理须与 002 同轮次；前端切打标签端点时跑 `/api/mappings` 引用 grep（跨轮契约同步纪律）。
+- 收尾状态：已完成（Review 履职，未产代码）
+
 ## 2026-07-14 — v0.3 PRD 阶段 R1 Developer Review
 - 本次角色：Developer（开发工程师）
 - 动作：被指定为 PRD 阶段 R1 Review 方（独立冷启动会话，非产出方切角色自审）

@@ -24,6 +24,8 @@
 
 ## Decisions（决策）
 
+- [ADR-0001 会话角色归属存储模型](decisions/ADR-0001-session-role-storage-model.md)：v0.3 M-1——废弃 v0.2 `session_mappings`（1:1）表，改 `claude_sessions.manual_role` 内联列 + `coalesce(manual_role, nullif(detected_role,'Unknown'),'General')` 归类，天然 1:N 并兼容 US-4 兜底。本项目首个 ADR。
+
 ## Opportunities（机会池）
 
 ## Retrospectives（复盘）

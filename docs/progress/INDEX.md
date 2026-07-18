@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**PRD 已定稿**（R1 两方 ✅ 通过 + PM 已订正 L-1/L-2/D-1/D-2 表述）→ 进入**设计阶段**
+- 当前阶段：**设计阶段 R1 Review中**（Developer ✅ 通过 / DevOps 待Review）
 - 阻塞项：无
-- 下一步入口：**Owner 新开独立会话「你是 Architect」做设计阶段**——出技术方案，首要定 **M-1（1:N 存储模型：`manual_role` 落 `claude_sessions` 列 + `coalesce(manual_role,detected_role,'General')` 归类 + `session_mappings` 整表废弃）**；参考 Developer 四条实现接力提示（见 `v0.3.md` Review 记录）
+- 下一步入口：**Owner 新开独立会话「你是 DevOps」Review `v0.3-design.md`**——审生产 .git 可读性/`DROP TABLE session_mappings` 迁移风险与回滚/nginx 错误页。Developer R1 已 ✅ 通过（提 DEV-M1 中·§6 schema 双套 DDL 认知偏差、实现前订正不阻塞；结论见 design 文末 Review 记录）。两方通过后由 Architect 判断是否进「修改中」订正 §6
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | — | — | 🔄 进行中（**PRD 已定稿**·R1 两方通过，进设计阶段） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（设计 R1：Developer ✅ / DevOps 待Review） |
 
 ## 当前 Change Notes
 

@@ -1,5 +1,18 @@
 # Architect 角色日志
 
+## 2026-07-14 — 会话摘要（v0.3 设计阶段 R1 产出）
+- 本次角色：Architect（架构师）
+- 动作：设计阶段产出（基于已定稿 PRD + 原型图上下文，出 `v0.3-design.md` + 首个 ADR）
+- 涉及文档：产出 `docs/progress/iterations/v0.3-design.md`、`docs/knowledge/decisions/ADR-0001-session-role-storage-model.md`；更新 `docs/knowledge/INDEX.md`、`docs/progress/iterations/v0.3.md`（设计阶段门禁 R1 待Review + 当前阶段）、`docs/progress/INDEX.md`；现状核实代码 `src/server/index.js`（API handler）、`src/server/db.js`、`src/server/parsers/coordination.js`、`docs/knowledge/ui/prototype-design-context.md`
+- 结论：完成设计文档，三大架构决策——① **M-1 路径 A**：废弃 `session_mappings`（1:1）表，`manual_role` 落 `claude_sessions` 列，归类 `coalesce(manual_role, nullif(detected_role,'Unknown'),'General')` 天然 1:N + 兼容 US-4 兜底（写成 ADR-0001，本项目首个 ADR）；② **US-5 迭代重建**：新增 `.git` 历史解析器从各项目 INDEX.md git 历史重建迭代活跃区间 + 会话时间窗匹配（后端大头，按项目缓存 + 生产 .git 不可读降级）；③ **API 契约收敛**：`/api/sessions` 增强（`manual_role`/`resolved_role`/`iteration_label`）+ 新增 `PUT/DELETE /api/sessions/role` 打标签 + `GET /api/communications/detail` 全文 + 废弃 `/api/mappings` 三端点。`002_session_role_model.sql` 迁移（加列 + 迁 session_mappings.role→manual_role + DROP 表），走已有 `migrations.js`。
+- 会话插曲（重要记录）：本会话启动时 `git log` 抓到旧 HEAD `3f40325`（PRD 尚"待Review"），据此误判 PRD 未定稿并白做了一轮 Architect Review 编辑（未落盘、工作区干净、未污染）；经 Owner 提示核对 HEAD 实为 `ff2658b`（PRD R1 早已两方通过定稿），纠正后正式进设计阶段。教训：启动时若系统 gitStatus 快照与 `git log` 不一致，以磁盘实际 HEAD 为准复核关键状态文件。
+- 关联迭代：v0.3（设计阶段 R1 待Review：Developer + DevOps）
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：① 生产各项目仓 `.git` 可读性须 DevOps 部署就绪检查前确认，不可读则 US-5 迭代标签整体降级为「未归属」（§4.3 已兜底）；② `DROP TABLE session_mappings` 不可逆，迁移前须备份（回滚策略待 DevOps Review 给出）；③ 前端 `MappingDialog`/`SessionSelect` 写路径与「角色→会话」读逻辑需 Developer 改造。
+- 下一步入口：Owner 各新开独立会话「你是 Developer」/「你是 DevOps」Review `v0.3-design.md`；两方齐后按状态机定稿进实现阶段。
+- 收尾状态：未收尾（当前会话）
+
 ## 2026-07-14 — 会话摘要（v0.3 PRD 阶段 R1 Architect Review）
 - 本次角色：Architect（架构师）
 - 动作：PRD 阶段 R1 Review（被指定为 Review 方，审技术可行性 / 状态模型 / 数据源）
