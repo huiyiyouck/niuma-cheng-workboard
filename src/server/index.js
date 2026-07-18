@@ -9,6 +9,7 @@ import { syncAllSessions, getSyncStatus, collectAllowedProjectIds } from "./sync
 import { parseVersionList } from "./parsers/project-index.js";
 import { parseIterationRecord } from "./parsers/iteration-record.js";
 import { loadConfig, validateConfig } from "./config.js";
+import { readCommunicationDetail } from "./parsers/coordination.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(here, "../..");
@@ -95,16 +96,16 @@ export function createServer({ configPath = DEFAULT_CONFIG_PATH, distDir = DEFAU
         return await handleSessionDetails(res, url);
       }
 
-      if (url.pathname === "/api/mappings" && method === "GET") {
-        return await handleListMappings(res, url);
+      if (url.pathname === "/api/sessions/role" && method === "PUT") {
+        return await handlePutSessionRole(req, res);
       }
 
-      if (url.pathname === "/api/mappings" && method === "POST") {
-        return await handleCreateMapping(req, res);
+      if (url.pathname === "/api/sessions/role" && method === "DELETE") {
+        return await handleDeleteSessionRole(res, url);
       }
 
-      if (url.pathname === "/api/mappings" && method === "DELETE") {
-        return await handleDeleteMapping(res, url);
+      if (url.pathname === "/api/communications/detail" && method === "GET") {
+        return await handleCommunicationDetail(res, url, configPath);
       }
 
       if (url.pathname === "/api/timeline/versions" && method === "GET") {
@@ -133,10 +134,15 @@ export function createServer({ configPath = DEFAULT_CONFIG_PATH, distDir = DEFAU
   });
 }
 
+// 角色归类（设计 §2.1，SQL 层与前端一致）：手动标签 > 自动识别(非 Unknown) > General 兜底
+const RESOLVED_ROLE_SQL = "COALESCE(s.manual_role, NULLIF(s.detected_role, 'Unknown'), 'General')";
+const VALID_ROLES = ["PM", "Architect", "Developer", "DevOps", "General"];
+
 async function handleListSessions(res, url) {
   await applyMigrations();
-  let projectId = url.searchParams.get("project_id");
+  const projectId = url.searchParams.get("project_id");
   const status = url.searchParams.get("status") || "all";
+  const roleFilter = url.searchParams.get("role"); // 新增：按 resolved_role 过滤（US-3）
   const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 200);
   const offset = Number(url.searchParams.get("offset")) || 0;
 
@@ -166,27 +172,33 @@ async function handleListSessions(res, url) {
     params.push(projectId);
   }
 
+  // status 重定义（去 session_mappings 依赖，设计 §3.1）
   if (status === "mapped") {
-    whereClauses.push("m.id IS NOT NULL");
+    whereClauses.push("(s.manual_role IS NOT NULL OR NULLIF(s.detected_role, 'Unknown') IS NOT NULL)");
   } else if (status === "unmapped") {
-    whereClauses.push("m.id IS NULL");
+    whereClauses.push(`(${RESOLVED_ROLE_SQL} = 'General' AND s.manual_role IS NULL)`);
+  }
+
+  // role 过滤：按归类结果（供 US-3 强限制选择器 / 角色→会话列表）
+  if (roleFilter) {
+    whereClauses.push(`${RESOLVED_ROLE_SQL} = $${paramIdx++}`);
+    params.push(roleFilter);
   }
 
   const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
   await withClient(async (client) => {
     const totalRes = await client.query(
-      `SELECT COUNT(*)::int as cnt FROM claude_sessions s LEFT JOIN session_mappings m ON s.id = m.session_id ${whereSql}`,
+      `SELECT COUNT(*)::int as cnt FROM claude_sessions s ${whereSql}`,
       params
     );
     const total = totalRes.rows[0].cnt;
 
     const sessionsRes = await client.query(
       `SELECT s.*,
-              m.id as mapping_id, m.role as mapped_role, m.project_id as mapped_project_id, m.note as mapping_note,
+              ${RESOLVED_ROLE_SQL} AS resolved_role,
               lm.last_messages
        FROM claude_sessions s
-       LEFT JOIN session_mappings m ON s.id = m.session_id
        LEFT JOIN LATERAL (
          SELECT (
            SELECT json_agg(json_build_object(
@@ -209,12 +221,14 @@ async function handleListSessions(res, url) {
       [...params, limit, offset]
     );
 
-    sendJson(res, 200, {
-      items: sessionsRes.rows,
-      total,
-      limit,
-      offset,
-    });
+    // iteration_label 占位（US-5 由 R2 的 .git 区间重建填充；恒标注推断）
+    const items = sessionsRes.rows.map((r) => ({
+      ...r,
+      iteration_label: null,
+      iteration_inferred: true,
+    }));
+
+    sendJson(res, 200, { items, total, limit, offset });
   });
 }
 
@@ -225,9 +239,8 @@ async function handleSessionDetails(res, url) {
   await applyMigrations();
   await withClient(async (client) => {
     const sessionRes = await client.query(
-      `SELECT s.*, m.id as mapping_id, m.role as mapped_role, m.project_id as mapped_project_id, m.note as mapping_note
+      `SELECT s.*, ${RESOLVED_ROLE_SQL} AS resolved_role
        FROM claude_sessions s
-       LEFT JOIN session_mappings m ON s.id = m.session_id
        WHERE s.id = $1`,
       [sessionId]
     );
@@ -251,75 +264,48 @@ async function handleSessionDetails(res, url) {
   });
 }
 
-async function handleListMappings(res, url) {
-  const projectId = url.searchParams.get("project_id");
-  await applyMigrations();
-
-  await withClient(async (client) => {
-    let sql = `SELECT m.id, m.session_id, m.project_id, m.role, m.note, m.created_at, m.updated_at,
-                      s.title as session_title, s.last_message_at, s.message_count
-               FROM session_mappings m
-               LEFT JOIN claude_sessions s ON m.session_id = s.id`;
-    const params = [];
-
-    if (projectId) {
-      sql += " WHERE m.project_id = $1";
-      params.push(projectId);
-    }
-    sql += " ORDER BY m.updated_at DESC";
-
-    const result = await client.query(sql, params);
-    sendJson(res, 200, { items: result.rows, total: result.rows.length });
-  });
-}
-
-async function handleCreateMapping(req, res) {
+async function handlePutSessionRole(req, res) {
   const body = await readJsonBody(req);
-  const { session_id, project_id, role, note } = body;
-  if (!session_id || !project_id || !role) {
-    return sendJson(res, 400, { error: "session_id, project_id, role 必填" });
-  }
-
+  const { session_id, role } = body;
+  if (!session_id || !role) return sendJson(res, 400, { error: "session_id, role 必填" });
+  if (!VALID_ROLES.includes(role)) return sendJson(res, 400, { error: `role 非法枚举: ${role}` });
   await applyMigrations();
-  await withClient(async (client) => {
-    const sessionRes = await client.query("SELECT id FROM claude_sessions WHERE id = $1", [session_id]);
-    if (sessionRes.rows.length === 0) {
-      return sendJson(res, 404, { error: "会话不存在" });
-    }
-
-    const now = new Date().toISOString();
-
-    // 以 (project_id, role) 为业务唯一键：每个项目+角色只能映射一个会话。
-    // 原子 upsert（ON CONFLICT），避免 SELECT-then-INSERT 并发下产生重复行（H-3）。
-    const upsert = await client.query(
-      `INSERT INTO session_mappings (session_id, project_id, role, note, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $5)
-       ON CONFLICT (project_id, role) DO UPDATE SET
-         session_id = EXCLUDED.session_id,
-         note = EXCLUDED.note,
-         updated_at = EXCLUDED.updated_at
-       RETURNING *, (xmax = 0) AS inserted`,
-      [session_id, project_id, role, note || null, now]
-    );
-    const row = upsert.rows[0];
-    sendJson(res, row.inserted ? 201 : 200, row);
-  });
+  return await updateManualRole(res, session_id, role);
 }
 
-async function handleDeleteMapping(res, url) {
+async function handleDeleteSessionRole(res, url) {
   const sessionId = url.searchParams.get("session_id");
   if (!sessionId) return sendJson(res, 400, { error: "session_id 参数缺失" });
-
   await applyMigrations();
-  await withClient(async (client) => {
-    const existing = await client.query("SELECT id FROM session_mappings WHERE session_id = $1", [sessionId]);
-    if (existing.rows.length === 0) {
-      return sendJson(res, 404, { error: "映射不存在" });
-    }
+  return await updateManualRole(res, sessionId, null);
+}
 
-    await client.query("DELETE FROM session_mappings WHERE session_id = $1", [sessionId]);
-    sendJson(res, 200, { ok: true });
+// 打标签 US-10：手动角色覆盖内联到 claude_sessions.manual_role
+// （role=null 为撤销纠错，resolved_role 回落 detected_role/General）
+async function updateManualRole(res, sessionId, role) {
+  await withClient(async (client) => {
+    const upd = await client.query(
+      `UPDATE claude_sessions AS s SET manual_role = $1 WHERE s.id = $2
+       RETURNING s.*, ${RESOLVED_ROLE_SQL} AS resolved_role`,
+      [role, sessionId]
+    );
+    if (upd.rows.length === 0) return sendJson(res, 404, { error: "会话不存在" });
+    sendJson(res, 200, { ok: true, session: upd.rows[0] });
   });
+}
+
+// US-8 沟通全文：读 coordination communications/{id}.md 全文（只读，出参不含 sourcePath）
+async function handleCommunicationDetail(res, url, configPath) {
+  const id = url.searchParams.get("id");
+  if (!id) return sendJson(res, 400, { error: "id 参数缺失" });
+  const cfg = await loadConfig(configPath);
+  const validated = validateConfig(cfg, { configPath });
+  const coord = validated.projects.find((p) => p.kind === "coordination" && p.resolvedPath);
+  if (!coord) return sendJson(res, 404, { error: "沟通文档未找到" });
+  const commDir = path.join(coord.resolvedPath, "communications");
+  const detail = await readCommunicationDetail(commDir, id);
+  if (!detail) return sendJson(res, 404, { error: "沟通文档未找到" });
+  sendJson(res, 200, detail);
 }
 
 async function handleTimelineVersions(res, url, configPath) {

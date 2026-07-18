@@ -144,6 +144,24 @@ export function isBcrTerminal(status) {
   return hasAny(status, BCR_TERMINAL);
 }
 
+/**
+ * 按 id 读单个沟通文档全文（US-8 `/api/communications/detail`）。
+ * id = communications 目录下去 `.md` 的文件名。找不到返回 null（handler 转 404）。
+ * 出参不含 sourcePath（DEV-L2：服务器绝对路径不透前端）。
+ */
+export async function readCommunicationDetail(dir, id) {
+  // 防目录穿越：id 只能是纯文件名，不含路径分隔符或上跳
+  if (!id || /[/\\]|\.\./.test(id)) return null;
+  const sourcePath = path.join(dir, `${id}.md`);
+  let content;
+  try {
+    content = await readFile(sourcePath, "utf8");
+  } catch {
+    return null;
+  }
+  return { id, reqId: extractReqId(`${id}.md`, content), content };
+}
+
 // ---------- helpers ----------
 
 async function countMarkdown(dir) {
