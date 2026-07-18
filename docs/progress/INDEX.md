@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**实现阶段 R1 续做**（设计 §6 已回环订正定稿 2026-07-18；Architect 已订正）
-- 阻塞项：无（设计 §6 回环订正已完成）
-- 下一步入口：**Owner 新开会话「你是 Developer」从 `workboard_dev` 隔离环境续实现 R1**——**第一步落 §6.0 迁移引擎修复**（`executeMigration` 改整文件 `client.query`、退役 `splitSqlStatements`、交 PG 解析、保留外层事务、迁移文件不用参数占位符），跑通全新库 `001→002`；再接 M-1 存储（`002` 加 `manual_role` + 迁 6 行 + DROP）+ `runSchemaDDL` 清理（DEV-M1，同轮）+ 归类 + API 契约（含 `/api/communications/detail` 出参不含 `sourcePath`）+ 前端抽屉/菜单。方案与依据见 [v0.3-design.md](iterations/v0.3-design.md) §6.0/§6.1 + `v0.3.md` Review 记录「设计 §6 回环 · Architect 订正回应」。**环境已备**：本地 `.env` 已同步生产现行 PG 密码 + 建 `workboard_dev` 空库 + `.env` 切 dev 库，生产 `workboard` 零触碰
+- 当前阶段：**实现阶段 · R1（后端）已完成入库**（§6.0 迁移引擎修复 + §6.1 M-1 存储迁移 = `f67505d`；后端 API 契约 = `aca10cf`；`workboard_dev` 全新库 `001→002` 实测通过 + API 15 项断言全绿）
+- 阻塞项：无
+- 下一步入口：**Developer 继续 R2（US-5 `.git` 迭代区间重建，填充 `/api/sessions` 的 `iteration_label` 占位）**→ R3（A 组前端抽屉重构 + `MappingDialog`/`SessionSelect` 切新打标签端点，见跨任务待办 P1）→ R4（C 组菜单 5→3 + D 待办折叠 + E 错误页前端）。生产迁移须走 OPS-1 闸口（restart 前 `pg_dump session_mappings`，部署就绪检查）。开发环境：`.env` 指 `workboard_dev` 隔离库（生产 `workboard` 零触碰），已灌 6 条归类样本
 
 ## 版本列表
 
@@ -67,6 +67,8 @@
 | P2 | 会话「迭代标签」精量匹配：识别某会话属于哪个迭代下的哪个角色（如「v0.2 的 PM 会话」），与现有 `detected_role` 并列。**Developer 预研发现（2026-07-06，供 PRD 参考）**：① 靠会话开头提 vX.Y 不可行——仅 4/115（≈3%）在前 3 条消息提到、标题 0 次；② 全文任意处出现 vX.Y 的有 82/115（≈71%），33 个完全没提；③ 另一条路是时间窗匹配（会话时间范围落入迭代活跃窗），但需迭代起止日期，现有 INDEX 版本表/迭代记录里日期稀疏；④ 可复用现有角色自动识别。需 PRD 定义匹配信号、多级降级与展示形态 | PM | Owner 口述（2026-07-06，v0.2 验收中提出，明确不纳入 v0.2） | 待研究 |
 | P2 | 菜单信息架构精简 5→3（Owner 已定方案 A，2026-07-06）：顶级菜单从「工作台/项目会话/部署/接入诊断/跨项目」收敛为 **「看板 / 项目会话 / 需求池」**。① **部署 + 接入诊断降级**——不再占顶级菜单，并入看板项目卡片详情抽屉的一个「接入/部署」tab（两者本质都是「每项目一行的技术健康信息」，且详情抽屉现已含接入详情 `DiagnosticDrawerContent`）；② 现「跨项目」菜单收敛为 **「需求池」**，BCR/沟通/谁等谁作为子 tab 保留；③ 看板与项目会话保留但**明确分工**——看板做横向概览+异常高亮，迭代/阶段等深入细节跳项目会话，不在两处重复维护时间轴展示；④ **生态根只读卡片钻取**（Owner 2026-07-06 追加）——项目会话视图里「公告板/框架真源」只读卡片点不进去，但 Owner 想看其「当前表现」。现状：公告板(coordination)详情**已存在于跨项目/需求池视图**（snapshot.crossProject：需求池/BCR/谁等谁/沟通），只缺卡片→详情的跳转入口；agent-workflow 详情数据薄（snapshot 仅 kindSummary 一句），要展示 baseline/版本/演进需**后端 workflow-source.js 扩展解析**。方案 A 落地时给两张只读卡片加点击钻取（公告板→需求池视图；框架真源→框架状态详情+补后端）。属 UI 信息架构重构，走 PM 定范围 → 设计 → 实现 | PM | Owner 口述（2026-07-06，v0.2 验收中提出，明确不纳入 v0.2，已定方案 A） | 待研究 |
 | P2 | `src/server/parsers/coordination.test.js:62`「读真实仓」用例断言耦合真实 `niuma-cheng-coordination` 仓数据（`activeRequestCount` 等）；真实仓需求关闭后 2→1 导致 `npm test` 长期性假失败。建议改 fixture 驱动，或约定断言随真源同步更新。非代码回归 | Developer | DevOps 2026-07-07 部署 `npm test` 发现 | 待处理 |
+| P2 | `src/server/parsers/project-index.test.js:47`「解析真实本项目 INDEX」用例硬编码期望「当前迭代=v0.2」，项目进入 v0.3 后 `npm test` 假失败（同 coordination.test.js 的真实数据耦合问题）。建议 fixture 化 | Developer | v0.3 R1 实现期 `npm test` 发现 | 待处理 |
+| P1 | 前端 `useProjectSession.ts`（`fetchMappings`/`createMapping`/`deleteMapping`）+ `EcosystemView` 的 `MappingDialog`/`SessionSelect` 仍调用**已废弃**的 `/api/mappings`（R1 后端 `aca10cf` 已删、`session_mappings` 表已 DROP）；须改用 `/api/sessions?role=` 分组读 + `PUT/DELETE /api/sessions/role` 打标签写。归 **R3（A 组前端抽屉重构）**同轮做（跨轮契约同步纪律，实现中间态前端映射暂不可用） | Developer | R1 后端契约变更（`aca10cf`） | 待处理（R3） |
 
 ## Bootstrap 记录
 - 时间：2026-06-17
