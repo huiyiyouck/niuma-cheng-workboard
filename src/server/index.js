@@ -10,6 +10,7 @@ import { parseVersionList } from "./parsers/project-index.js";
 import { parseIterationRecord } from "./parsers/iteration-record.js";
 import { loadConfig, validateConfig } from "./config.js";
 import { readCommunicationDetail } from "./parsers/coordination.js";
+import { getIterationIntervals, matchIteration } from "./parsers/iteration-history.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(here, "../..");
@@ -147,18 +148,27 @@ async function handleListSessions(res, url) {
   const offset = Number(url.searchParams.get("offset")) || 0;
 
   // claude_project_id 支持单值或数组（IRC-002：同一项目在本机与服务器各有会话目录）
+  // dirToRepo：会话目录编码 id → 项目仓路径（US-5 迭代标签反查；非工作流目录查不到 → 标签 null）
   let projectDirIds = null;
-  if (projectId) {
-    try {
-      const rawConfig = await loadConfig(DEFAULT_CONFIG_PATH);
+  const dirToRepo = new Map();
+  try {
+    const rawConfig = await loadConfig(DEFAULT_CONFIG_PATH);
+    const validated = validateConfig(rawConfig, { configPath: DEFAULT_CONFIG_PATH });
+    const resolvedById = new Map(validated.projects.map((p) => [p.id, p.resolvedPath]));
+    for (const rp of rawConfig?.projects ?? []) {
+      const repo = resolvedById.get(rp.id);
+      if (!repo || !rp.claude_project_id) continue;
+      for (const d of [].concat(rp.claude_project_id)) dirToRepo.set(d, repo);
+    }
+    if (projectId) {
       const project = rawConfig?.projects?.find((p) => p.id === projectId);
       if (project?.claude_project_id) {
         projectDirIds = [].concat(project.claude_project_id);
       } else if (projectId === "ecosystem-root" && rawConfig?.ecosystem?.claude_project_id) {
         projectDirIds = [].concat(rawConfig.ecosystem.claude_project_id);
       }
-    } catch {}
-  }
+    }
+  } catch {}
 
   const whereClauses = [];
   const params = [];
@@ -221,10 +231,15 @@ async function handleListSessions(res, url) {
       [...params, limit, offset]
     );
 
-    // iteration_label 占位（US-5 由 R2 的 .git 区间重建填充；恒标注推断）
+    // US-5 迭代标签：按会话所属仓的 INDEX git 历史区间 × last_message_at 推断（缓存内取；
+    // 仓不可读 / 非工作流目录 → 区间空 → null，中性「未归属」，不阻塞列表）
+    const repoIntervals = new Map();
+    for (const repo of new Set(sessionsRes.rows.map((r) => dirToRepo.get(r.project_id)).filter(Boolean))) {
+      repoIntervals.set(repo, await getIterationIntervals(repo));
+    }
     const items = sessionsRes.rows.map((r) => ({
       ...r,
-      iteration_label: null,
+      iteration_label: matchIteration(repoIntervals.get(dirToRepo.get(r.project_id)) ?? [], r.last_message_at),
       iteration_inferred: true,
     }));
 
