@@ -193,3 +193,20 @@
 - 遗留问题/风险：① DesignSync 直改源码的 **build 缺口**（预览生效需 design agent / 刷新），已记 context；② **Codex resume 能力待 v0.4 实证**；③ web 工具 `deepseek-v4-pro` 模型故障（本次调研受阻，非项目问题，或已恢复）；④ 当前会话前端临时的 v0.4 `localStorage` 补充（v0.4 再做）。
 - 下一步入口：**Owner 新开独立 Architect / Developer 会话跑 R1 Review**（评审 PRD + UI 原型图；不在产出方会话自审，见 `pm-corrections` / memory `no-self-review-role-switch`）。
 - 收尾状态：已收尾
+
+## 2026-07-14 — 会话摘要（R1 Review 收结果 + PM 订正 + PRD 定稿）
+- 本次角色：PM
+- 动作：Review 结果确认 + 表述订正 + 定稿
+- 涉及文档：`v0.3.md`（门禁定稿）、`v0.3-prd.md`（订正 L-1/L-2/D-1/D-2 + 文档状态定稿）、`INDEX.md`（转设计阶段）、`architect.md`/`developer.md`（Review 产出留痕）
+- 结论：
+  1. **R1 两方独立会话冷启动完成、均 ✅ 通过、无阻塞**：Architect（技术可行性）+ Developer（可实现性，核实到文件行号）。
+  2. **Reviewer 读代码重要发现**：US-8（`communications` 已 `readFile` 全文）+ US-12（`codex-parser` 完整非 stub、`source` 列 v0.2 已存在、codex 入库已支持）后端 v0.2 已落地，PRD 高估成本。
+  3. **M-1（中·留设计阶段）**：`manualRole` 存储与「1:N 迁移」歧义——`session_mappings` 严格 1:1 与 1:N 目标冲突；建议 `manual_role` 落 `claude_sessions` 列 + `coalesce(manual_role,detected_role,'General')` 归类 + `session_mappings` 整表废弃（走 `migrations` 002）。
+  4. **PM 顺手订正 4 条低严重度表述**：L-1（§5/§7 US-12 后端已落地）、L-2（§5 US-8 透出已读全文）、D-1（§7 补「A 组=改造现有组件非从零翻译」）、D-2（US-4 基线口径 + 7.5% 不作硬门槛）。
+  5. **PM 动作**：① commit Review 产出留痕（`2076b74`）② 订正 4 条 + PRD 定稿（`a1492ff`，文档状态/门禁→已定稿、INDEX 转设计阶段）。
+- 关联迭代：v0.3（**PRD 已定稿 → 设计阶段**）
+- 关联非迭代工作：无
+- 关联 Change Note：无（PRD 刚定稿，暂无 Change Note）
+- 遗留问题/风险：① **M-1（1:N 存储模型）设计阶段必须闭环**；② Developer 四条实现接力提示（US-5 git 读取 / US-8 by-id 接口 / US-6 两套视图归位 / US-7 portal）见 `v0.3.md` Review 记录，设计/实现阶段用；③ Codex resume 待 v0.4 实证（承前）。
+- 下一步入口：**Owner 新开独立会话「你是 Architect」做设计阶段**（出技术方案，首要定 M-1；设计文档出来再走一轮 Review）。
+- 收尾状态：已收尾
