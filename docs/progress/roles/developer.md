@@ -1,5 +1,17 @@
 # Developer 角色日志
 
+## 2026-07-14 — v0.3 PRD 阶段 R1 Developer Review
+- 本次角色：Developer（开发工程师）
+- 动作：被指定为 PRD 阶段 R1 Review 方（独立冷启动会话，非产出方切角色自审）
+- 涉及产出：`docs/progress/iterations/v0.3-prd.md`（文末追加 Developer R1 Review）、`v0.3.md`（门禁表 + Review 记录）、`INDEX.md`（当前阶段/版本表）
+- 结论：**✅ 通过**（可实现性整体成立，无阻塞项）。独立读代码核实 10 个工程成本维度均可落地。
+- 核实要点（真代码）：① `ConversationView`（`EcosystemView.tsx:1173`）现为全屏 `fixed inset-0` 弹窗，A 组抽屉重构属中等前端工作量、可复用 `Drawer`/`IterationTimeline`/`StageDrawer`/`SessionSelect`/`MappingDialog`；② `NAV_ITEMS` 确为 5 项（US-6 的 5→3 基数属实）；③ **附议 M-1**——`session_mappings` 严格 1:1（`session_id UNIQUE`+`UNIQUE(project_id,role)`）、`claude_sessions` 无 `manual_role` 列，是我落手实现的直接阻碍；④ **附议 L-1/L-2**——`codex-parser.js` 完整非 stub、`source` 列 v0.2 已存在、`readCommunications` 已 `readFile` 全文（仅丢弃只留 `firstHeading`），US-8/US-12 后端成本高估属实；⑤ `detectRole`（`session-meta.js:41,68`）现返回 `Unknown`，US-4 兜底 General 改动极小。
+- 独立提出（超出 Architect 已提）：D-1（低·§7 实现指引宜补「A 组=改造 v0.2 现有内联组件、非从 design 从零翻译」）、D-2（低·验收可验证性——US-4 基线「~7.5%」在 PRD 无出处/口径，验收无法对照，建议 PM 标明）。
+- 设计阶段接力提示：US-5 git 读取封装/时间窗匹配为 B 组后端大头；US-8 全文透出宜 by-id 接口避免 snapshot 膨胀；US-6 须理清 `App.tsx`/`EcosystemView.tsx` 两套并存视图归位；US-7 `overflow-hidden` 浮层需 portal。
+- 关联迭代：v0.3（PRD 阶段 R1）
+- 下一步入口：Owner 切到 PM，判断是否进「修改中」订正表述（M-1 设计阶段定；D-1/D-2/L-1/L-2 顺手订正），再定稿进设计阶段。
+- 收尾状态：已完成（Review 履职，未产代码）
+
 ## 2026-07-07 — 对话查看器背景层级修复
 - 本次角色：Developer（开发工程师）
 - 动作：Bugfix / UI 显示问题

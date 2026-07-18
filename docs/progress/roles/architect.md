@@ -1,5 +1,18 @@
 # Architect 角色日志
 
+## 2026-07-14 — 会话摘要（v0.3 PRD 阶段 R1 Architect Review）
+- 本次角色：Architect（架构师）
+- 动作：PRD 阶段 R1 Review（被指定为 Review 方，审技术可行性 / 状态模型 / 数据源）
+- 涉及文档：`docs/progress/iterations/v0.3-prd.md`、`docs/progress/iterations/v0.3.md`、`docs/progress/INDEX.md`；核实代码 `src/server/db.js`、`src/server/sync/{claude-sync,codex-parser,session-meta}.js`、`src/server/parsers/coordination.js`、`src/server/migrations.js`
+- 结论：**✅ 通过**（技术可行性整体成立，无阻塞项）。审的 6 维度（currentByRole 前端临时状态模型 / 迭代维读 .git / detectRole 扫 assistant / manualRole 数据模型 / communications 读取 / Codex 同步+source 列）数据源均可落地。**实际读码核实后的关键发现：US-12（Codex 同步+source 列）与 US-8（communications 读取）后端管道大部分已在 v0.2 落地（IRC-003），PRD 有工程成本高估。**
+- 问题清单：M-1（中）`manualRole` 存储载体与「1:N 迁移」语义歧义——`session_mappings` 现为严格 1:1（`session_id UNIQUE`+`UNIQUE(project_id,role)`），须设计阶段定明（架构建议：`manualRole` 落 `claude_sessions.manual_role` 列、归类 `coalesce(manual_role,detected_role,'General')`、`session_mappings` 整表废弃、迁移走已有 `migrations.js`）；L-1/L-2（低）§5/§7 对 US-12/US-8 后端现状表述过时建议 PM 订正；L-3（低·体例）PRD 两个空 `## Review 记录` 标题建议合并。均不阻塞 PRD 定稿。
+- 关联迭代：v0.3（PRD R1 Architect ✅ 通过；Developer 待Review）
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：① M-1 须在设计阶段闭环，否则 Developer 无法落手 1:N 存储；② 生产环境各项目仓 `.git` 可读性须在部署就绪检查前与 DevOps 闭环，不可读则迭代维需降级方案（PRD §6 已列开放项）。
+- 下一步入口：Owner 切到 Developer 角色 Review `v0.3-prd.md`（R1 剩 Developer 一方）；R1 两方齐后由 PM 判断是否进「修改中」订正 L-1/L-2 表述，再定稿进设计阶段。
+- 收尾状态：未收尾（当前会话）
+
 ## 2026-07-06 — 会话摘要（v0.2 实现阶段 R2-2 Architect Review）
 - 本次角色：Architect（架构师）
 - 动作：实现阶段 Review（最终复核）
