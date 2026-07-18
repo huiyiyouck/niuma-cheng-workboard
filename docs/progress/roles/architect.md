@@ -1,5 +1,17 @@
 # Architect 角色日志
 
+## 2026-07-18 — 会话摘要（v0.3 设计 §6 回环订正 · 迁移引擎 dollar-quoted bug）
+- 本次角色：Architect（架构师）
+- 动作：阶段回环订正（实现阶段 Developer 发现 → 回设计订正 §6 → 维持定稿 → 流转 Developer 续 R1）
+- 涉及文档：订正 `docs/progress/iterations/v0.3-design.md`（新增 §6.0 迁移引擎修复 + §6.1 标注 + §7 取舍 + 文末回环订正说明 + 文档状态）、`docs/progress/iterations/v0.3.md`（设计门禁回环标注 + Review 记录追加 Architect 回环回应）、`docs/progress/INDEX.md`（当前阶段→实现续 R1）；核实代码 `src/server/migrations.js`（`splitSqlStatements`/`executeMigration`）、`src/server/migrations/001_init.sql`（DO 块）
+- 结论：Developer 实现阶段搭全新库 `workboard_dev` 时 `applyMigrations` 跑 `001` 报 `42601`。**核实 Developer 诊断完全属实**：`splitSqlStatements`（`:100-143`）不识别 dollar-quoted 块，`001_init.sql:56-60` 的 `DO $$…END $$` 内多分号被误拆成碎片、逐个 query 语法错；生产因 `schema_migrations=v1` 跳过 `001` 故未暴露。**订正方案 B（我定）**：`executeMigration` 改整个 `.sql` 文件单次 `client.query` 交 PG 服务端解析、**退役 `splitSqlStatements`**（不再手搓 SQL 拆分器，根治同类 bug）；保留外层 `BEGIN/COMMIT`；约束迁移文件不用参数占位符。未选方案 A（补丁支持 `$$`，仍是手搓拆分器温床）。全新库/生产两条路径正确性均已在 §6.0 论证（生产 6 行 session_mappings 由 `002` 步骤2 迁移、引擎修复对生产 `002` 无害）。回环属实现发现→前提补全、非架构方向变更，订正即维持定稿，未再走正式 Review。
+- 关联迭代：v0.3（设计 §6 回环订正定稿 → 实现阶段续 R1）
+- 关联非迭代工作：无
+- 关联 Change Note：无（阶段回环订正，走门禁回环记录，非定稿后 Change Note）
+- 遗留问题/风险：① 实现第一步须落 §6.0 引擎修复（改 `executeMigration` + 退役 `splitSqlStatements`）并在 `workboard_dev` 跑通 `001→002` 验证，再接 M-1；② `runSchemaDDL` 的 session_mappings 段清理仍须与 `002` 同轮（DEV-M1）；③ 生产迁移前 `pg_dump` 强制前置（OPS-1）。
+- 下一步入口：Owner 新开会话「你是 Developer」从 `workboard_dev` 续实现 R1。
+- 收尾状态：未收尾（当前会话）
+
 ## 2026-07-18 — 会话摘要（v0.3 设计阶段 R1 收敛定稿）
 - 本次角色：Architect（架构师）
 - 动作：Review 意见处理（产出方进「修改中」订正正文）+ 设计阶段定稿

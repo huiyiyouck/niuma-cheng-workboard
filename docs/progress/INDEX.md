@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**实现阶段 R1 暂停 → 回设计阶段订正 §6**（2026-07-18·实现开工时发现 migrations 引擎 DO `$$` 块 bug 致全新库 `001` 跑不起来、设计 §6「全新库 001→002 链」假设被证伪；Owner 拍板回设计阶段）
-- 阻塞项：设计 §6 待 Architect 订正（migrations `splitSqlStatements` 需支持 dollar-quoted 块，否则 `002` 全新库不可靠）
-- 下一步入口：**Owner 新开会话「你是 Architect」进「修改中」订正设计 §6**——依据见 `v0.3.md` Review 记录「设计 §6 回环 · Developer 实现阶段发现（2026-07-18）」（migrations DO 块 bug 证据 + 生产真实状态：`schema_migrations`=v1、`session_mappings` 6 行真实数据、无 `manual_role`）。订正定稿后 Developer 从已就绪的 `workboard_dev` 隔离环境续 R1（M-1 存储 + runSchemaDDL 清理 + 归类 + API 契约 + 前端）。**环境已备**：本地 `.env` 已同步生产现行 PG 密码 + 建 `workboard_dev` 空库 + `.env` 切 dev 库，生产 `workboard` 零触碰
+- 当前阶段：**实现阶段 R1 续做**（设计 §6 已回环订正定稿 2026-07-18；Architect 已订正）
+- 阻塞项：无（设计 §6 回环订正已完成）
+- 下一步入口：**Owner 新开会话「你是 Developer」从 `workboard_dev` 隔离环境续实现 R1**——**第一步落 §6.0 迁移引擎修复**（`executeMigration` 改整文件 `client.query`、退役 `splitSqlStatements`、交 PG 解析、保留外层事务、迁移文件不用参数占位符），跑通全新库 `001→002`；再接 M-1 存储（`002` 加 `manual_role` + 迁 6 行 + DROP）+ `runSchemaDDL` 清理（DEV-M1，同轮）+ 归类 + API 契约（含 `/api/communications/detail` 出参不含 `sourcePath`）+ 前端抽屉/菜单。方案与依据见 [v0.3-design.md](iterations/v0.3-design.md) §6.0/§6.1 + `v0.3.md` Review 记录「设计 §6 回环 · Architect 订正回应」。**环境已备**：本地 `.env` 已同步生产现行 PG 密码 + 建 `workboard_dev` 空库 + `.env` 切 dev 库，生产 `workboard` 零触碰
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（实现开工发现 migrations DO 块 bug，回设计阶段订正 §6） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（设计 §6 已回环订正定稿，Developer 续实现 R1） |
 
 ## 当前 Change Notes
 
