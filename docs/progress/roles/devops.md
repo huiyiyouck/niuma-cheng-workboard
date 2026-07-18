@@ -1,5 +1,18 @@
 # DevOps 角色日志
 
+## 2026-07-18 — 会话摘要
+- 本次角色：DevOps（运维/部署工程师）
+- 动作：设计阶段 R1 Review（被指定第二 Review 方，冷启动独立会话）
+- 涉及文档：`docs/progress/iterations/v0.3-design.md`（追加 R1·DevOps Review 记录 + Review 状态表）、`docs/progress/iterations/v0.3.md`（设计阶段门禁 Review 结果）、`docs/progress/INDEX.md`（当前状态/下一步/版本列表）；核对 `src/server/migrations.js`、`migrations/001_init.sql`、`src/server/index.js`、`projects.config.json`、`docs/knowledge/devops/workboard-test-deployment.md`、`2026-07-07-ops-ip8088-repoint-prod.md`
+- 结论：**✅ 通过**（无阻塞高严重度问题）。三点范围逐项核实：① 生产 .git 可读性——降级路径健壮（不可读→标签 null 不崩），生产 `/root/Project/niuma-cheng-*` 真实克隆 root 可读，前提成立，部署就绪检查阶段正式复核；② `002` DROP 风险——DB 确为 PostgreSQL（`pg_dump` 回滚适用）、迁移事务原子（无半迁移态），补齐设计点名要的回滚策略；③ US-9 nginx 错误页——可实现、规格待部署阶段补。
+- 问题：OPS-1（中·`002` 惰性自动应用无备份闸口，`pg_dump` 须定为 restart 前强制步骤）、OPS-2（中·生产自监控 .git 路径须指真实克隆非 `/opt/workboard-prod/app`）、OPS-3（低·US-9 错误页规格缺失 + 生产 nginx 疑缺 SPA fallback，落地前核实）、OPS-4（低·git dubious-ownership 备查）；均不阻塞定稿，落部署就绪检查/实现阶段。交叉印证 Developer DEV-M1「DROP 后 sync 复活空表」有部署可观测性，部署检查将加「迁移后 sync 复查表不存在」一条。
+- 关联迭代：v0.3
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：OPS-1~4 待部署就绪检查/实现阶段落；生产 .git 实测复核留部署就绪检查（本 R1 为设计审查，未 SSH 实测生产）。
+- 下一步入口：Owner 新开会话「你是 Architect」判断是否进「修改中」订正 §6（DEV-M1），再定稿进实现阶段。
+- 收尾状态：已收尾
+
 ## 2026-07-07 — 会话摘要（其四）
 - 本次角色：DevOps（运维/部署工程师）
 - 动作：Bugfix 生产重新部署（二次）— 对话查看器三层背景修正

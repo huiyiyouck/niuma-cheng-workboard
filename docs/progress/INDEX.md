@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**设计阶段 R1 Review中**（Developer ✅ 通过 / DevOps 待Review）
+- 当前阶段：**设计阶段 R1 已定稿**（2026-07-18·Developer ✅ / DevOps ✅；Architect 已进「修改中」订正 §6 DEV-M1/OPS-1/OPS-2 + §3.4 DEV-L2 + §7 DEV-L1）→ 进入**实现阶段**
 - 阻塞项：无
-- 下一步入口：**Owner 新开独立会话「你是 DevOps」Review `v0.3-design.md`**——审生产 .git 可读性/`DROP TABLE session_mappings` 迁移风险与回滚/nginx 错误页。Developer R1 已 ✅ 通过（提 DEV-M1 中·§6 schema 双套 DDL 认知偏差、实现前订正不阻塞；结论见 design 文末 Review 记录）。两方通过后由 Architect 判断是否进「修改中」订正 §6
+- 下一步入口：**Owner 新开会话「你是 Developer」开工实现**。实现须落：① M-1 存储（`002_session_role_model.sql` 加 `manual_role` + 迁 `session_mappings.role` + `DROP`）**并同轮删 `db.js runSchemaDDL` 的 `session_mappings` 段**（DEV-M1，否则 sync 复活空表）；② US-5 `.git` 区间重建（可 `git log -p` 优化，DEV-L1）；③ API 契约（`/api/sessions` 增强 + `PUT/DELETE /api/sessions/role` + `/api/communications/detail` 出参不含 `sourcePath` + 废弃 `/api/mappings`，改前 grep 无引用）；④ 前端抽屉/菜单 5→3。部署阶段落 OPS-1（`pg_dump` restart 前强制 + 迁移后 sync 复查表不存在）/OPS-2（生产各项目 path 指真实 git 克隆）/OPS-3（US-9 错误页规格）。设计定稿见 [v0.3-design.md](iterations/v0.3-design.md) 文末订正说明
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（设计 R1：Developer ✅ / DevOps 待Review） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（设计已定稿 2026-07-18，进实现阶段） |
 
 ## 当前 Change Notes
 

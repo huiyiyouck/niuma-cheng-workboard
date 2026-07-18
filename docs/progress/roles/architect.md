@@ -1,5 +1,17 @@
 # Architect 角色日志
 
+## 2026-07-18 — 会话摘要（v0.3 设计阶段 R1 收敛定稿）
+- 本次角色：Architect（架构师）
+- 动作：Review 意见处理（产出方进「修改中」订正正文）+ 设计阶段定稿
+- 涉及文档：`docs/progress/iterations/v0.3-design.md`（订正 §3.4/§6/§7 + 文末追加订正说明 + 文档状态/Review 状态改定稿）、`docs/progress/iterations/v0.3.md`（设计门禁→已定稿）、`docs/progress/INDEX.md`（当前阶段→实现）；核实代码 `src/server/db.js`（`ensureSchema`/`runSchemaDDL`）、`src/server/migrations/001_init.sql`、`src/server/sync/claude-sync.js`、`src/server/index.js`
+- 结论：设计 R1 两方 ✅ 通过（Developer + DevOps，均无阻塞高严重度）。作为产出方核实 Review 意见后逐条订正：**DEV-M1（采纳）**——核实属实：`ensureSchema` 进程内首次 sync 触发 `runSchemaDDL`（非「每次启动」），且 `001_init.sql` 与 `runSchemaDDL` 是两套重复 schema 真源，§6 重写触发点/清理范围（删 runSchemaDDL 的 session_mappings 段、001 靠 002 DROP 收口）；**采纳 DEV-M1 建议③** 撤回「runSchemaDDL 补 manual_role」（manual_role 由 002 保证冷启动）；**DEV-L2（采纳）** §3.4 出参去 `sourcePath`；**DEV-L1（采纳为实现注意）** §7 补 `git log -p` 优化；**OPS-1/OPS-2（采纳补正文）** §6 补 pg_dump restart 前强制 + 生产 .git 指真实克隆；**OPS-3/OPS-4** 落部署就绪检查不改正文。订正完成即定稿，进实现阶段。
+- 关联迭代：v0.3（设计阶段 R1 已定稿 2026-07-18 → 实现阶段）
+- 关联非迭代工作：无
+- 关联 Change Note：无（Review→修改中→定稿正常流程，非定稿后变更，无需 Change Note）
+- 遗留问题/风险：① 实现阶段务必把「删 `db.js runSchemaDDL` 的 session_mappings 段」与 `002` 迁移放同一轮（否则 sync 复活空表 + schema_migrations 已记 002 的静默不一致）；② 废弃 `/api/mappings` 前 grep 确认前端无残留引用；③ 部署阶段落 OPS-1（pg_dump 强制前置 + 迁移后 sync 复查）/OPS-2（生产各项目 path 指真实 git 克隆非 `/opt/workboard-prod/app`）/OPS-3（US-9 错误页规格 + 核实生产 nginx 现块）。
+- 下一步入口：Owner 新开会话「你是 Developer」开工实现（M-1 存储迁移 + US-5 .git 重建 + API 契约 + 前端抽屉/菜单）。
+- 收尾状态：未收尾（当前会话）
+
 ## 2026-07-14 — 会话摘要（v0.3 设计阶段 R1 产出）
 - 本次角色：Architect（架构师）
 - 动作：设计阶段产出（基于已定稿 PRD + 原型图上下文，出 `v0.3-design.md` + 首个 ADR）
