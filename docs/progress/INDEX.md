@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**实现阶段 · R1（后端）已完成入库**（§6.0 迁移引擎修复 + §6.1 M-1 存储迁移 = `f67505d`；后端 API 契约 = `aca10cf`；`workboard_dev` 全新库 `001→002` 实测通过 + API 15 项断言全绿）
+- 当前阶段：**实现阶段 · R1 后端 + R2 US-5 已完成入库**（R1：迁移引擎 + M-1 存储 + API 契约 = `f67505d`/`aca10cf`；R2：迭代标签 `.git` 区间重建 = `ae2a944`，端到端四时段断言全对）
 - 阻塞项：无
-- 下一步入口：**Developer 继续 R2（US-5 `.git` 迭代区间重建，填充 `/api/sessions` 的 `iteration_label` 占位）**→ R3（A 组前端抽屉重构 + `MappingDialog`/`SessionSelect` 切新打标签端点，见跨任务待办 P1）→ R4（C 组菜单 5→3 + D 待办折叠 + E 错误页前端）。生产迁移须走 OPS-1 闸口（restart 前 `pg_dump session_mappings`，部署就绪检查）。开发环境：`.env` 指 `workboard_dev` 隔离库（生产 `workboard` 零触碰），已灌 6 条归类样本
+- 下一步入口：**Developer 继续 R3（A 组前端抽屉重构：`ConversationView` 全屏→右侧抽屉 + 左角色菜单 + 当前/历史下拉 + 拖拽打标签；同轮把 `MappingDialog`/`SessionSelect` 从废弃 `/api/mappings` 切到 `/api/sessions?role=` + `PUT/DELETE /api/sessions/role`，见跨任务待办 P1）**→ R4（C 组菜单 5→3 + D 待办折叠 + E 错误页前端）。生产迁移须走 OPS-1 闸口（restart 前 `pg_dump session_mappings`，部署就绪检查）。开发环境：`.env` 指 `workboard_dev` 隔离库（生产 `workboard` 零触碰），已灌 6 条归类样本
 
 ## 版本列表
 
