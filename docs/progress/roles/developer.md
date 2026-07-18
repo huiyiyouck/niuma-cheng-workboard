@@ -1,5 +1,16 @@
 # Developer 角色日志
 
+## 2026-07-18 — v0.3 实现阶段 R1 开工：环境修复 + migrations DO 块 bug 回设计
+- 本次角色：Developer（开发工程师）
+- 动作：实现阶段 R1 开工准备（搭隔离开发环境）→ 发现迁移引擎 bug → Owner 拍板回设计阶段
+- 结论：**R1 未落代码即暂停、回设计阶段**。搭 dev 环境时连出一串问题，最终 Owner 决定回设计由 Architect 订正 §6。
+- 环境修复（Owner 逐项授权）：① 本地开发 DB 连不上（28P01 密码认证失败）——诊断为 `.env` 旧密码（18 字符）失效、生产 PG 密码已轮换（19 字符）；Owner 授权从生产 `/opt/workboard-prod/app/.env` 取现行密码同步到本地 `.env`（全程走变量、不回显明文），`db.js` 恢复连通（`workboard`/`postgres`）。② 为隔离不可逆 `002`（`DROP TABLE session_mappings`），Owner 授权我直接建 `workboard_dev` 空库 + `.env` 切 dev 库，生产 `workboard` 零触碰。
+- 核心发现（回设计依据）：`migrations.js` `splitSqlStatements`（`:100-143`）按 `;` 拆语句、**不识别 dollar-quoted `DO $$` 块** → 全新库跑 `001` 语法错（42601）；生产因 `schema_migrations` 已记 version 1、`applyMigrations` 跳过 `001` 而未暴露。致设计 §6「全新库 `001→002` 链」假设被证伪。生产真实状态：`session_mappings` **6 行真实映射**（`002` 须迁进 `manual_role`、不可简单 DROP）、`claude_sessions` 无 `manual_role`、`detected_role`/`source` 已在。
+- 处理：向 Owner 出选项，Owner 选「先回 Architect 改设计 §6」（未选我推荐的「R1 内自修引擎 + 轻量 note」）。已把发现整理为 `v0.3.md` Review 记录「设计 §6 回环 · Developer 实现阶段发现」移交材料 + 更新 INDEX 回设计阶段；不代改设计正文/门禁（留 Architect）。
+- 关联迭代：v0.3（实现阶段 R1 暂停 → 回设计阶段）
+- 下一步入口：Owner 新开会话「你是 Architect」进「修改中」订正设计 §6；定稿后 Developer 从已就绪的 `workboard_dev` 隔离环境续 R1。
+- 收尾状态：已完成（本会话：DB 环境修复 + dev 库就绪 + 回设计移交，未落代码）
+
 ## 2026-07-18 — v0.3 设计阶段 R1 Developer Review
 - 本次角色：Developer（开发工程师）
 - 动作：被指定为设计阶段 R1 Review 方（独立冷启动会话）
