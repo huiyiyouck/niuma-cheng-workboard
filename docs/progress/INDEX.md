@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：PRD 阶段 R1 Review中（Architect ✅ 通过 / Developer ✅ 通过 —— 两方均已 Review）
+- 当前阶段：**PRD 已定稿**（R1 两方 ✅ 通过 + PM 已订正 L-1/L-2/D-1/D-2 表述）→ 进入**设计阶段**
 - 阻塞项：无
-- 下一步入口：Owner 切到 PM，判断是否进「修改中」订正 PRD 表述（M-1 设计阶段定；D-1/D-2/L-1/L-2 顺手订正 §5/§7/US-4，均不阻塞），再定稿进设计阶段。两方 R1 结论见 PRD 文末 Review 记录
+- 下一步入口：**Owner 新开独立会话「你是 Architect」做设计阶段**——出技术方案，首要定 **M-1（1:N 存储模型：`manual_role` 落 `claude_sessions` 列 + `coalesce(manual_role,detected_role,'General')` 归类 + `session_mappings` 整表废弃）**；参考 Developer 四条实现接力提示（见 `v0.3.md` Review 记录）
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | — | — | 🔄 进行中（PRD R1：Architect ✅ / Developer ✅，待 PM 订正表述后定稿） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | — | — | 🔄 进行中（**PRD 已定稿**·R1 两方通过，进设计阶段） |
 
 ## 当前 Change Notes
 
