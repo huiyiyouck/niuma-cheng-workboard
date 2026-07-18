@@ -121,27 +121,7 @@ async function runSchemaDDL() {
     await client.query("CREATE INDEX IF NOT EXISTS idx_claude_messages_session_id ON claude_messages(session_id)");
     await client.query("CREATE INDEX IF NOT EXISTS idx_claude_messages_created_at ON claude_messages(created_at)");
 
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS session_mappings (
-        id SERIAL PRIMARY KEY,
-        session_id TEXT NOT NULL UNIQUE REFERENCES claude_sessions(id) ON DELETE CASCADE,
-        project_id TEXT NOT NULL,
-        role TEXT NOT NULL,
-        note TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        UNIQUE (project_id, role)
-      )
-    `);
-    // 设计 §2.2 业务唯一键：每个项目的每个角色只能映射一个会话（存量表用 ADD CONSTRAINT 兼容补齐）
-    await client.query(`
-      DO $$ BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'session_mappings_project_id_role_key') THEN
-          ALTER TABLE session_mappings ADD CONSTRAINT session_mappings_project_id_role_key UNIQUE (project_id, role);
-        END IF;
-      END $$;
-    `);
-    await client.query("CREATE INDEX IF NOT EXISTS idx_session_mappings_project_id ON session_mappings(project_id)");
-    await client.query("CREATE INDEX IF NOT EXISTS idx_session_mappings_role ON session_mappings(role)");
+    // session_mappings 已随 v0.3 M-1（002 迁移）废弃：手动角色归属内联到 claude_sessions.manual_role。
+    // 此处不再建表（DEV-M1：否则 sync 时 runSchemaDDL 会把 002 DROP 掉的空表重新建回）。
   });
 }

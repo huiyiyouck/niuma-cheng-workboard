@@ -79,11 +79,11 @@ async function executeMigration(version, filePath) {
   await withClient(async (client) => {
     await client.query("BEGIN");
     try {
-      const statements = splitSqlStatements(sql);
-      for (const stmt of statements) {
-        if (stmt.trim()) {
-          await client.query(stmt);
-        }
+      // 整个 .sql 文件作为单条 simple query 交 PostgreSQL 服务端解析（正确处理
+      // dollar-quoted 块 / 注释 / 字符串——唯一权威 SQL 解析器；设计 §6.0）。
+      // 迁移文件须为纯字面量、不用参数占位符（simple query 多语句不支持 $1/$2）。
+      if (sql.trim()) {
+        await client.query(sql);
       }
       await client.query(
         "INSERT INTO schema_migrations (version, name, applied_at) VALUES ($1, $2, $3)",
@@ -95,51 +95,6 @@ async function executeMigration(version, filePath) {
       throw err;
     }
   });
-}
-
-function splitSqlStatements(sql) {
-  const statements = [];
-  let current = [];
-  let inSingleQuote = false;
-  let inDoubleQuote = false;
-  let inComment = false;
-  
-  for (let i = 0; i < sql.length; i++) {
-    const char = sql[i];
-    const next = sql[i + 1];
-    
-    if (inComment) {
-      if (char === "\n") {
-        inComment = false;
-      }
-      continue;
-    }
-    
-    if (char === "-" && next === "-") {
-      inComment = true;
-      continue;
-    }
-    
-    if (char === "'" && !inDoubleQuote) {
-      inSingleQuote = !inSingleQuote;
-    }
-    if (char === '"' && !inSingleQuote) {
-      inDoubleQuote = !inDoubleQuote;
-    }
-    
-    if (char === ";" && !inSingleQuote && !inDoubleQuote) {
-      statements.push(current.join(""));
-      current = [];
-    } else {
-      current.push(char);
-    }
-  }
-  
-  if (current.join("").trim()) {
-    statements.push(current.join(""));
-  }
-  
-  return statements;
 }
 
 export async function getMigrationStatus() {
