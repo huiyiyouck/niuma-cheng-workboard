@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>服务暂时不可用 · 项目管理工作台</title>
+  <style>
+    /* 自包含静态错误页：nginx error_page 500/502/503/504 挂载，不依赖任何外部资源 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f3f5f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      text-align: center;
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 14px;
+      padding: 48px 56px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .code { font-size: 44px; font-family: ui-monospace, monospace; color: rgba(3, 2, 19, 0.2); }
+    h1 { font-size: 15px; font-weight: 500; color: #030213; margin-top: 12px; }
+    p { font-size: 12px; color: #717182; margin-top: 8px; line-height: 1.6; }
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #fff;
+      background: #030213;
+      border-radius: 10px;
+      text-decoration: none;
+    }
+    a:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="code">5xx</div>
+    <h1>服务暂时不可用</h1>
+    <p>工作台后端服务未响应，可能正在重启或部署中。<br />请稍候片刻后重试。</p>
+    <a href="/">重试</a>
+  </div>
+</body>
+</html>

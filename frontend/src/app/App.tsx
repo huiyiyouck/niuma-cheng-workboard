@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   type Project,
   type CrossProjectItem,
@@ -13,9 +16,6 @@ import {
 } from "./snapshot";
 import {
   LayoutDashboard,
-  Rocket,
-  Stethoscope,
-  Network,
   ChevronRight,
   ExternalLink,
   AlertCircle,
@@ -34,7 +34,6 @@ import {
   MessageSquare,
   GitBranch,
   Flag,
-  Unlink,
   GitPullRequest,
   MessagesSquare,
   Compass,
@@ -117,63 +116,6 @@ function WorkbenchSkeleton() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function DeploySkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-white rounded-xl border border-border p-4 space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <Sk className="h-4 w-28" />
-              <Sk className="h-4 w-14 rounded" />
-            </div>
-            <Sk className="h-7 w-7 rounded-full" />
-          </div>
-          <Sk className="h-3 w-48" />
-          <div className="flex items-center gap-1.5">
-            <Sk className="h-1.5 w-1.5 rounded-full" />
-            <Sk className="h-3 w-8" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DiagnosticsSkeleton() {
-  return (
-    <div className="bg-white rounded-xl border border-border overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-[#f6f7f9]">
-              {["ID", "项目名", "类型", "接入状态", "文件检查", "解析路径", "解析器", "最近读取", "错误摘要", ""].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <tr key={i} className="border-b border-border/50">
-                <td className="px-4 py-3"><Sk className="h-3 w-20" /></td>
-                <td className="px-4 py-3"><Sk className="h-4 w-24" /></td>
-                <td className="px-4 py-3"><Sk className="h-5 w-14 rounded" /></td>
-                <td className="px-4 py-3"><Sk className="h-5 w-16 rounded-full" /></td>
-                <td className="px-4 py-3"><Sk className="h-4 w-12" /></td>
-                <td className="px-4 py-3"><Sk className="h-3 w-36" /></td>
-                <td className="px-4 py-3"><Sk className="h-3 w-28" /></td>
-                <td className="px-4 py-3"><Sk className="h-3 w-12" /></td>
-                <td className="px-4 py-3"><Sk className="h-3 w-20" /></td>
-                <td className="px-4 py-3" />
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );
@@ -457,12 +399,30 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 // ─── Project Drawer Content ────────────────────────────────────────────────────
 
 function ProjectDrawerContent({ project }: { project: Project }) {
+  // US-6：部署 + 接入诊断降级为项目详情抽屉 tab
+  const [tab, setTab] = useState<"overview" | "infra">("overview");
   const isIterative = project.kind === "business" || project.kind === "workboard";
   const pendingTodos = project.todos.filter((t) => !t.done);
   const doneTodos = project.todos.filter((t) => t.done);
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-1 bg-[#f6f7f9] border border-border rounded-lg p-1 w-fit">
+        {([["overview", "概览"], ["infra", "接入 / 部署"]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition-all duration-150 ${tab === id ? "bg-[#030213] text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "infra" && <InfraDrawerTab project={project} />}
+
+      {tab === "overview" && (
+      <>
       <div className="flex items-center gap-2 flex-wrap">
         <KindBadge kind={project.kind} />
         <StatusBadge status={project.status} />
@@ -593,19 +553,30 @@ function ProjectDrawerContent({ project }: { project: Project }) {
           </div>
         </div>
       </Section>
+      </>
+      )}
     </div>
   );
 }
 
-// ─── Diagnostic Drawer Content ─────────────────────────────────────────────────
+// ─── 接入 / 部署 tab（US-6：原部署视图 + 接入诊断视图降级并入） ────────────────
 
-function DiagnosticDrawerContent({ project }: { project: Project }) {
+function InfraDrawerTab({ project }: { project: Project }) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 flex-wrap">
-        <KindBadge kind={project.kind} />
-        <StatusBadge status={project.status} />
-      </div>
+      <Section title="部署">
+        {project.url ? (
+          <a href={project.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-lg border border-border bg-white p-3 hover:border-[#030213]/20 transition-colors group">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              <p className="text-sm font-mono text-foreground/70 truncate">{project.url}</p>
+            </div>
+            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground flex-shrink-0" />
+          </a>
+        ) : (
+          <p className="text-sm text-muted-foreground">未配置线上地址</p>
+        )}
+      </Section>
       {project.errorSummary && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-xs font-medium text-red-700 mb-2">错误堆栈</p>
@@ -695,6 +666,91 @@ function CrossProjectDrawerContent({ item }: { item: CrossProjectItem }) {
   );
 }
 
+// ─── 沟通全文抽屉（US-8：GET /api/communications/detail + Markdown 只读渲染） ──
+
+type CommDetailState =
+  | { status: "loading" }
+  | { status: "ready"; content: string }
+  | { status: "notfound" }
+  | { status: "error"; message: string };
+
+function CommDetailDrawerContent({ commId }: { commId: string }) {
+  const [state, setState] = useState<CommDetailState>({ status: "loading" });
+
+  useEffect(() => {
+    let alive = true;
+    setState({ status: "loading" });
+    fetch(`/api/communications/detail?id=${encodeURIComponent(commId)}`)
+      .then(async (r) => {
+        if (!alive) return;
+        if (r.status === 404) { setState({ status: "notfound" }); return; }
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const j = await r.json();
+        setState({ status: "ready", content: j.content ?? "" });
+      })
+      .catch((e) => { if (alive) setState({ status: "error", message: String((e as Error)?.message ?? e) }); });
+    return () => { alive = false; };
+  }, [commId]);
+
+  if (state.status === "loading") {
+    return (
+      <div className="space-y-3">
+        <Sk className="h-5 w-2/3" />
+        {[0, 1, 2, 3, 4].map((i) => <Sk key={i} className={`h-4 ${i % 2 === 0 ? "w-full" : "w-4/5"}`} />)}
+      </div>
+    );
+  }
+  if (state.status === "notfound") {
+    return <EmptyState icon={MessageSquare} message="沟通文档未找到" />;
+  }
+  if (state.status === "error") {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <p className="text-xs text-red-600">加载失败：{state.message}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div
+        className="text-sm text-foreground/85 leading-relaxed
+          [&_h1]:text-base [&_h1]:font-medium [&_h1]:mt-4 [&_h1]:mb-2
+          [&_h2]:text-sm [&_h2]:font-medium [&_h2]:mt-4 [&_h2]:mb-1.5
+          [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-3 [&_h3]:mb-1
+          [&_p]:my-2 [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal
+          [&_li]:my-0.5 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground
+          [&_code]:font-mono [&_code]:text-xs [&_code]:bg-[#030213]/5 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded
+          [&_pre]:bg-[#f6f7f9] [&_pre]:border [&_pre]:border-border [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre_code]:bg-transparent [&_pre_code]:p-0
+          [&_table]:text-xs [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1
+          [&_a]:underline [&_hr]:my-4 [&_hr]:border-border"
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.content}</ReactMarkdown>
+      </div>
+      <p className="text-xs text-muted-foreground text-center border-t border-border pt-3">
+        只读 · 聚合自 coordination communications
+      </p>
+    </div>
+  );
+}
+
+// ─── SPA 404 兜底（US-9） ─────────────────────────────────────────────────────
+
+function NotFoundView() {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center gap-4 bg-background">
+      <p className="text-5xl font-mono text-[#030213]/20">404</p>
+      <p className="text-sm text-foreground">页面不存在</p>
+      <p className="text-xs text-muted-foreground font-mono">{window.location.pathname}</p>
+      <a
+        href="/"
+        className="mt-2 px-4 py-2 text-sm font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity"
+      >
+        返回工作台
+      </a>
+    </div>
+  );
+}
+
 // ─── Summary Bar ──────────────────────────────────────────────────────────────
 
 function SummaryBar() {
@@ -776,13 +832,59 @@ function CoordinationBanner({ onViewCrossProject }: { onViewCrossProject: () => 
 
 // ─── Cross-project Todo List ──────────────────────────────────────────────────
 
+// US-7：单条待办文本 ≤2 行截断 + hover 浮层看全文（portal 到 body，防外层 overflow-hidden 裁剪）
+function TodoTextCell({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [pop, setPop] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const show = () => {
+    const el = ref.current;
+    if (!el) return;
+    // 只在真的被截断时弹浮层
+    if (el.scrollHeight <= el.clientHeight + 2) return;
+    const r = el.getBoundingClientRect();
+    setPop({ top: r.bottom + 6, left: r.left, width: Math.max(r.width, 320) });
+  };
+
+  return (
+    <>
+      <p ref={ref} className="leading-relaxed line-clamp-2" onMouseEnter={show} onMouseLeave={() => setPop(null)}>
+        {text}
+      </p>
+      {pop && createPortal(
+        <div
+          className="fixed z-[70] bg-white border border-border rounded-lg shadow-xl p-3 text-sm text-foreground leading-relaxed max-w-[480px] max-h-[50vh] overflow-y-auto pointer-events-none"
+          style={{ top: pop.top, left: pop.left, width: pop.width }}
+        >
+          {text}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
 function CrossTodoList() {
   const { crossTodos: CROSS_TODOS } = useViewModel();
+  // US-7：默认前 5 条，超出折叠；footer hover 浮现 peek 预览
+  const [expanded, setExpanded] = useState(false);
+  const [peek, setPeek] = useState<{ top: number; left: number } | null>(null);
+  const footerRef = useRef<HTMLButtonElement>(null);
   const statusColor: Record<string, string> = {
     "待启动": "bg-gray-100 text-gray-500",
     "待评估": "bg-amber-50 text-amber-600",
     "进行中": "bg-blue-50 text-blue-600",
     "已完成": "bg-emerald-50 text-emerald-600",
+  };
+
+  const visible = expanded ? CROSS_TODOS : CROSS_TODOS.slice(0, 5);
+  const hiddenCount = CROSS_TODOS.length - 5;
+
+  const showPeek = () => {
+    const el = footerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setPeek({ top: r.top - 8, left: r.left + 16 });
   };
 
   return (
@@ -800,11 +902,11 @@ function CrossTodoList() {
           </tr>
         </thead>
         <tbody>
-          {CROSS_TODOS.map((t) => (
+          {visible.map((t) => (
             <tr key={t.id} className="border-b border-border/50 last:border-0 hover:bg-accent/30 transition-colors">
               <td className="px-5 py-3"><PriorityBadge priority={t.priority} /></td>
               <td className="px-5 py-3 text-foreground max-w-[320px]">
-                <p className="leading-relaxed">{t.text}</p>
+                <TodoTextCell text={t.text} />
               </td>
               <td className="px-5 py-3">
                 <span className="font-mono text-xs text-muted-foreground bg-accent px-1.5 py-0.5 rounded">{t.project}</span>
@@ -819,6 +921,36 @@ function CrossTodoList() {
           ))}
         </tbody>
       </table>
+      {hiddenCount > 0 && (
+        <button
+          ref={footerRef}
+          onClick={() => { setExpanded((v) => !v); setPeek(null); }}
+          onMouseEnter={() => !expanded && showPeek()}
+          onMouseLeave={() => setPeek(null)}
+          className="w-full px-5 py-2.5 border-t border-border text-xs text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors flex items-center justify-center gap-1.5"
+        >
+          {expanded ? (
+            <>收起 <ChevronRight className="h-3 w-3 -rotate-90" /></>
+          ) : (
+            <>展开全部 · 还有 {hiddenCount} 条 <ChevronRight className="h-3 w-3 rotate-90" /></>
+          )}
+        </button>
+      )}
+      {peek && !expanded && createPortal(
+        <div
+          className="fixed z-[70] -translate-y-full bg-white border border-border rounded-lg shadow-xl p-3 w-[420px] max-w-[80vw] pointer-events-none space-y-1.5"
+          style={{ top: peek.top, left: peek.left }}
+        >
+          <p className="text-[10px] text-muted-foreground">未展开的 {hiddenCount} 条：</p>
+          {CROSS_TODOS.slice(5, 10).map((t) => (
+            <p key={t.id} className="text-xs text-foreground/80 truncate">
+              <span className="font-mono text-muted-foreground mr-1">{t.priority}</span>{t.text}
+            </p>
+          ))}
+          {hiddenCount > 5 && <p className="text-[10px] text-muted-foreground">…等 {hiddenCount} 条</p>}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -921,115 +1053,6 @@ function WorkbenchView({ onProjectClick, onViewCrossProject }: { onProjectClick:
   );
 }
 
-// ─── Deploy View ──────────────────────────────────────────────────────────────
-
-function DeployView() {
-  const { projects: PROJECTS } = useViewModel();
-  const withUrl = PROJECTS.filter((p) => p.url);
-  const withoutUrl = PROJECTS.filter((p) => !p.url);
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      {withUrl.map((p) => (
-        <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer" className="block bg-white rounded-xl border border-border p-4 hover:border-[#030213]/20 hover:shadow-sm transition-all duration-150 group">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">{p.name}</p>
-              <div className="mt-1"><KindBadge kind={p.kind} /></div>
-            </div>
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200 group-hover:bg-emerald-100 transition-colors">
-              <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
-            </div>
-          </div>
-          <p className="text-xs font-mono text-muted-foreground truncate">{p.url}</p>
-          <div className="mt-3 flex items-center gap-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            <p className="text-xs text-muted-foreground">在线</p>
-          </div>
-        </a>
-      ))}
-      {withoutUrl.map((p) => (
-        <div key={p.id} className="bg-white rounded-xl border border-border p-4 opacity-50">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">{p.name}</p>
-              <div className="mt-1"><KindBadge kind={p.kind} /></div>
-            </div>
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 border border-gray-200">
-              <Unlink className="h-3.5 w-3.5 text-gray-400" />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">未配置线上地址</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Diagnostics View ─────────────────────────────────────────────────────────
-
-function DiagnosticsView({ onRowClick }: { onRowClick: (p: Project) => void }) {
-  const { projects: PROJECTS } = useViewModel();
-  const isHighlight = (p: Project) => p.status === "config-error" || p.status === "read-error";
-
-  return (
-    <div className="bg-white rounded-xl border border-border overflow-hidden">
-      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-[#f6f7f9]">
-              {["ID", "项目名", "类型", "接入状态", "文件检查", "解析路径", "解析器", "最近读取", "错误摘要", ""].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {PROJECTS.map((p) => (
-              <tr
-                key={p.id}
-                className={`border-b border-border/50 transition-colors ${isHighlight(p) ? "bg-red-50/40 hover:bg-red-50/70 cursor-pointer" : "hover:bg-accent/40"}`}
-                onClick={() => isHighlight(p) && onRowClick(p)}
-              >
-                <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{p.id}</td>
-                <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{p.name}</td>
-                <td className="px-4 py-3"><KindBadge kind={p.kind} /></td>
-                <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
-                <td className="px-4 py-3">
-                  <span className={`text-sm font-medium ${p.fileCheck === "ok" ? "text-emerald-600" : p.fileCheck === "missing" ? "text-amber-600" : "text-red-500"}`}>
-                    {p.fileCheck === "ok" ? "✓ 通过" : p.fileCheck === "missing" ? "⚠ 缺失" : "✗ 失败"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 max-w-[160px]">
-                  <p className="text-xs font-mono text-muted-foreground truncate">{p.resolvePath}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="text-xs font-mono text-muted-foreground whitespace-nowrap">{p.parser}</p>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <p className="text-xs font-mono text-muted-foreground">{p.lastRead}</p>
-                </td>
-                <td className="px-4 py-3 max-w-[180px]">
-                  {p.errorSummary
-                    ? <p className="text-xs text-red-600 truncate font-mono">{p.errorSummary}</p>
-                    : <span className="text-muted-foreground">—</span>
-                  }
-                </td>
-                <td className="px-4 py-3">
-                  {isHighlight(p) && (
-                    <span className="inline-flex items-center gap-1 text-xs text-red-500 font-medium whitespace-nowrap">
-                      详情 <ChevronRight className="h-3 w-3" />
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 // ─── Cross-project View ───────────────────────────────────────────────────────
 
 type ActiveFilter = "进行中" | "已关闭" | "全部";
@@ -1038,7 +1061,7 @@ const CLOSED_STATUSES: ReqStatus[] = ["已关闭"];
 const BCR_CLOSED_STATUSES = ["已回流下游", "已拒绝"];
 const isBcrClosed = (status: string) => BCR_CLOSED_STATUSES.some((s) => status.includes(s));
 
-function CrossProjectView({ onItemClick }: { onItemClick: (item: CrossProjectItem) => void }) {
+function CrossProjectView({ onItemClick, onCommClick }: { onItemClick: (item: CrossProjectItem) => void; onCommClick: (commId: string) => void }) {
   const { crossItems: CROSS_PROJECT_ITEMS, bcrItems: BCR_ITEMS, commItems: COMM_ITEMS } = useViewModel();
   const [tab, setTab] = useState<"pool" | "blocking" | "comm" | "bcr">("pool");
   const [tabLoading, setTabLoading] = useState(false);
@@ -1190,16 +1213,21 @@ function CrossProjectView({ onItemClick }: { onItemClick: (item: CrossProjectIte
           {COMM_ITEMS.length === 0
             ? <EmptyState icon={MessageSquare} message="暂无沟通记录" />
             : COMM_ITEMS.map((c) => (
-              <div key={c.id} className="bg-white rounded-xl border border-border p-4">
+              <button key={c.id} onClick={() => onCommClick(c.id)} className="w-full text-left bg-white rounded-xl border border-border p-4 hover:border-[#030213]/20 hover:shadow-sm transition-all duration-150 group">
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-mono text-muted-foreground bg-accent px-2 py-0.5 rounded">{c.reqId}</span>
                     <span className="text-xs text-muted-foreground">{c.projects.join(" ↔ ")}</span>
                   </div>
-                  <span className="text-xs font-mono text-muted-foreground">{c.ts}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted-foreground">{c.ts}</span>
+                    <span className="text-xs text-[#030213]/50 group-hover:text-foreground flex items-center gap-0.5 transition-colors">
+                      查看全文 <ChevronRight className="h-3 w-3" />
+                    </span>
+                  </div>
                 </div>
-                <p className="text-sm text-foreground/80 leading-relaxed">{c.summary}</p>
-              </div>
+                <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{c.summary}</p>
+              </button>
             ))
           }
         </div>
@@ -1271,22 +1299,19 @@ function EmptyState({ icon: Icon, message }: { icon: React.FC<{ className?: stri
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-type View = "workbench" | "deploy" | "diagnostics" | "crossproject" | "sessions";
+type View = "workbench" | "sessions" | "crossproject";
 
+// US-6 菜单 5→3（方案 A）：部署+接入诊断降级进看板项目详情抽屉 tab；跨项目收敛为需求池
 const NAV_ITEMS: { id: View; label: string; Icon: React.FC<{ className?: string }> }[] = [
-  { id: "workbench", label: "工作台", Icon: LayoutDashboard },
+  { id: "workbench", label: "看板", Icon: LayoutDashboard },
   { id: "sessions", label: "项目会话", Icon: MessagesSquare },
-  { id: "deploy", label: "部署", Icon: Rocket },
-  { id: "diagnostics", label: "接入诊断", Icon: Stethoscope },
-  { id: "crossproject", label: "跨项目", Icon: Network },
+  { id: "crossproject", label: "需求池", Icon: Package },
 ];
 
 const VIEW_LABELS: Record<View, string> = {
-  workbench: "工作台",
+  workbench: "看板",
   sessions: "项目会话",
-  deploy: "部署",
-  diagnostics: "接入诊断",
-  crossproject: "跨项目",
+  crossproject: "需求池",
 };
 
 function Sidebar({ activeView, onViewChange }: { activeView: View; onViewChange: (v: View) => void }) {
@@ -1318,7 +1343,7 @@ function Sidebar({ activeView, onViewChange }: { activeView: View; onViewChange:
             >
               <item.Icon className="h-4 w-4 flex-shrink-0" />
               <span>{item.label}</span>
-              {item.id === "diagnostics" && errorCount > 0 && (
+              {item.id === "workbench" && errorCount > 0 && (
                 <span className={`ml-auto text-xs font-medium rounded-full px-1.5 py-0.5 leading-none ${active ? "bg-white/20 text-white" : "bg-red-100 text-red-600"}`}>
                   {errorCount}
                 </span>
@@ -1359,18 +1384,23 @@ export default function App() {
   const { ui, refetch } = useSnapshot();
   const [activeView, setActiveView] = useState<View>("workbench");
   const [drawerProjectId, setDrawerProjectId] = useState<string | null>(null);
-  const [drawerDiagId, setDrawerDiagId] = useState<string | null>(null);
   const [drawerCrossId, setDrawerCrossId] = useState<string | null>(null);
+  const [drawerCommId, setDrawerCommId] = useState<string | null>(null);
   const [conversationSessionId, setConversationSessionId] = useState<string | null>(null);
 
   const vm = ui.state === "ready" ? mapSnapshot(ui.data) : EMPTY_VIEW_MODEL;
   const isLoading = ui.state === "loading";
   const isError = ui.state === "error";
 
+  // US-9：SPA 404 兜底（后端未知路径回退 index.html，前端按 pathname 判断）
+  if (typeof window !== "undefined" && window.location.pathname !== "/" && !window.location.pathname.endsWith(".html")) {
+    return <NotFoundView />;
+  }
+
   const closeAllDrawers = () => {
     setDrawerProjectId(null);
-    setDrawerDiagId(null);
     setDrawerCrossId(null);
+    setDrawerCommId(null);
   };
 
   const handleViewChange = (v: View) => {
@@ -1380,8 +1410,8 @@ export default function App() {
 
   // Drawer 用 id 保留：轮询刷新后仍指向最新对象；对象消失 / 被禁用则降级
   const drawerProject = drawerProjectId ? vm.projects.find((p) => p.id === drawerProjectId) ?? null : null;
-  const drawerDiagProject = drawerDiagId ? vm.projects.find((p) => p.id === drawerDiagId) ?? null : null;
   const drawerCrossItem = drawerCrossId ? vm.crossItems.find((c) => c.id === drawerCrossId) ?? null : null;
+  const drawerCommItem = drawerCommId ? vm.commItems.find((c) => c.id === drawerCommId) ?? null : null;
 
   return (
     <ViewModelProvider value={vm}>
@@ -1409,8 +1439,6 @@ export default function App() {
               <>
                 {activeView === "workbench" && <WorkbenchSkeleton />}
                 {activeView === "sessions" && <WorkbenchSkeleton />}
-                {activeView === "deploy" && <DeploySkeleton />}
-                {activeView === "diagnostics" && <DiagnosticsSkeleton />}
                 {activeView === "crossproject" && <CrossProjectSkeleton />}
               </>
             ) : (
@@ -1427,12 +1455,11 @@ export default function App() {
                     onSessionClick={(id) => setConversationSessionId(id)}
                   />
                 )}
-                {activeView === "deploy" && <DeployView />}
-                {activeView === "diagnostics" && (
-                  <DiagnosticsView onRowClick={(p) => setDrawerDiagId(p.id)} />
-                )}
                 {activeView === "crossproject" && (
-                  <CrossProjectView onItemClick={(item) => setDrawerCrossId(item.id)} />
+                  <CrossProjectView
+                    onItemClick={(item) => setDrawerCrossId(item.id)}
+                    onCommClick={(id) => setDrawerCommId(id)}
+                  />
                 )}
               </>
             )}
@@ -1443,12 +1470,12 @@ export default function App() {
           {drawerProject ? <ProjectDrawerContent project={drawerProject} /> : <DrawerGone />}
         </Drawer>
 
-        <Drawer open={!!drawerDiagId} onClose={() => setDrawerDiagId(null)} title={drawerDiagProject ? `${drawerDiagProject.name} — 接入详情` : "接入详情"}>
-          {drawerDiagProject ? <DiagnosticDrawerContent project={drawerDiagProject} /> : <DrawerGone />}
-        </Drawer>
-
         <Drawer open={!!drawerCrossId} onClose={() => setDrawerCrossId(null)} title={drawerCrossItem?.id ?? "需求详情"}>
           {drawerCrossItem ? <CrossProjectDrawerContent item={drawerCrossItem} /> : <DrawerGone />}
+        </Drawer>
+
+        <Drawer open={!!drawerCommId} onClose={() => setDrawerCommId(null)} title={drawerCommItem ? `${drawerCommItem.reqId} · 沟通记录` : "沟通记录"}>
+          {drawerCommItem ? <CommDetailDrawerContent commId={drawerCommItem.id} /> : <DrawerGone />}
         </Drawer>
 
         {conversationSessionId && (
