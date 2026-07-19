@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**实现阶段 · R1 后端 + R2 US-5 已完成入库**（R1：迁移引擎 + M-1 存储 + API 契约 = `f67505d`/`aca10cf`；R2：迭代标签 `.git` 区间重建 = `ae2a944`，端到端四时段断言全对）
+- 当前阶段：**实现阶段 · R1 后端 + R2 US-5 + R3 A 组前端已完成入库**（R1 = `f67505d`/`aca10cf`；R2 = `ae2a944`；R3 对话抽屉 + 打标签 + 契约切换（P1 债已还）= `22e6a99`，Playwright 端到端全绿）
 - 阻塞项：无
-- 下一步入口：**Developer 继续 R3（A 组前端抽屉重构：`ConversationView` 全屏→右侧抽屉 + 左角色菜单 + 当前/历史下拉 + 拖拽打标签；同轮把 `MappingDialog`/`SessionSelect` 从废弃 `/api/mappings` 切到 `/api/sessions?role=` + `PUT/DELETE /api/sessions/role`，见跨任务待办 P1）**→ R4（C 组菜单 5→3 + D 待办折叠 + E 错误页前端）。生产迁移须走 OPS-1 闸口（restart 前 `pg_dump session_mappings`，部署就绪检查）。开发环境：`.env` 指 `workboard_dev` 隔离库（生产 `workboard` 零触碰），已灌 6 条归类样本
+- 下一步入口：**Developer 继续 R4（C 组菜单 5→3：`App.tsx` `NAV_ITEMS` 收敛看板/项目会话/需求池、部署+接入诊断降级进项目详情抽屉 tab、跨项目收敛需求池四子 tab；D 组 `CrossTodoList` 折叠·前 5 条 + hover 浮层 portal 防 `overflow-hidden` 裁剪；E 组 SPA 404 兜底 + 静态 500/502 页；US-8 沟通抽屉接 `GET /api/communications/detail`）**。R3 遗留一项设计空白决策待 Review 确认：参谋长席位改「生态根最新活跃会话」自动显示（M-1 无 chief-of-staff 枚举）。生产迁移须走 OPS-1 闸口（restart 前 `pg_dump session_mappings`，部署就绪检查）。开发环境：`.env` 指 `workboard_dev` 隔离库（生产 `workboard` 零触碰）
 
 ## 版本列表
 
