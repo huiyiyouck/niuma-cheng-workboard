@@ -8,6 +8,7 @@ import {
   triggerSync,
 } from "../useProjectSession";
 import type { ClaudeSession, ClaudeMessage, Project, TimelineStage, TimelineStageStatus, TimelineVersionStatus } from "../snapshot";
+import { MarkdownContent } from "./MarkdownContent";
 import {
   MessageSquare,
   RefreshCw,
@@ -1103,10 +1104,11 @@ function MessageBubble({ msg }: { msg: ClaudeMessage }) {
           </span>
           <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleString("zh-CN")}</span>
         </div>
-        <div className={`rounded-lg px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
-          isUser ? "bg-blue-50 text-blue-900 border border-blue-100" : "bg-white text-foreground border border-border/70"
+        {/* US-1：AI 回复按 Markdown 渲染；用户消息保持原文换行 */}
+        <div className={`rounded-lg px-4 py-2.5 text-sm break-words shadow-sm ${
+          isUser ? "bg-blue-50 text-blue-900 border border-blue-100 leading-relaxed whitespace-pre-wrap" : "bg-white text-foreground border border-border/70"
         }`}>
-          {renderContent()}
+          {isUser ? renderContent() : <MarkdownContent text={renderContent()} />}
         </div>
       </div>
     </div>
