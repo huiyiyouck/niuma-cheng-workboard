@@ -853,22 +853,22 @@ function ConversationDrawer({
         <div className="flex-1 min-w-0 flex flex-col bg-[#f3f5f8]">
           {/* 顶栏 */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-white flex-shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="min-w-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
                   {currentSession ? (currentSession.title || "（无标题）") : roleLabel(activeRole)}
                 </p>
                 {currentSession && (
-                  <p className="text-xs text-muted-foreground">
-                    {project.name} · {currentSession.message_count} 条消息
-                  </p>
+                  <span className="flex items-center gap-1.5 flex-shrink-0">
+                    <IterationBadge label={currentSession.iteration_label} full />
+                    <SourceBadge source={currentSession.source} />
+                  </span>
                 )}
               </div>
               {currentSession && (
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <IterationBadge label={currentSession.iteration_label} full />
-                  <SourceBadge source={currentSession.source} />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  {project.name} · {currentSession.message_count} 条消息
+                </p>
               )}
             </div>
             <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground flex-shrink-0">
@@ -984,16 +984,16 @@ export function ConversationView({ sessionId, onClose }: { sessionId: string; on
       <div className="absolute top-0 right-0 h-full w-[72%] min-w-[640px] max-w-full bg-[#f3f5f8] border-l border-border shadow-xl flex flex-col">
         {/* 顶部栏 */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-white shadow-sm flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
                 {data?.session.title ?? "加载中..."}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {data?.session.project_name} · {data?.session.message_count ?? 0} 条消息
-              </p>
+              {data?.session && <SourceBadge source={data.session.source} />}
             </div>
-            {data?.session && <SourceBadge source={data.session.source} />}
+            <p className="text-xs text-muted-foreground">
+              {data?.session.project_name} · {data?.session.message_count ?? 0} 条消息
+            </p>
           </div>
           <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground flex-shrink-0">
             <X className="h-4 w-4" />
