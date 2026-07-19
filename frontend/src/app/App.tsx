@@ -1362,8 +1362,6 @@ export default function App() {
   const [drawerDiagId, setDrawerDiagId] = useState<string | null>(null);
   const [drawerCrossId, setDrawerCrossId] = useState<string | null>(null);
   const [conversationSessionId, setConversationSessionId] = useState<string | null>(null);
-  const [mappingsVersion, setMappingsVersion] = useState(0);
-  const refreshMappings = () => setMappingsVersion((v) => v + 1);
 
   const vm = ui.state === "ready" ? mapSnapshot(ui.data) : EMPTY_VIEW_MODEL;
   const isLoading = ui.state === "loading";
@@ -1427,8 +1425,6 @@ export default function App() {
                   <EcosystemView
                     projects={vm.projects}
                     onSessionClick={(id) => setConversationSessionId(id)}
-                    onRefreshMappings={refreshMappings}
-                    mappingsVersion={mappingsVersion}
                   />
                 )}
                 {activeView === "deploy" && <DeployView />}

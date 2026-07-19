@@ -1,11 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import type {
-  ClaudeSession,
-  ClaudeMessage,
-  SessionMapping,
   SessionListResponse,
   SessionDetailResponse,
-  MappingListResponse,
   SyncResult,
   SyncStatus,
   TimelineVersionsResponse,
@@ -39,7 +35,8 @@ function useRefetchOnSessionSync(load: () => void) {
 
 export function useSessionList(params: {
   projectId?: string;
-  status?: "all" | "mapped" | "unmapped";
+  status?: "all" | "manual" | "auto";
+  role?: string;
   limit?: number;
   offset?: number;
 }) {
@@ -54,6 +51,7 @@ export function useSessionList(params: {
       const qs = new URLSearchParams();
       if (params.projectId) qs.set("project_id", params.projectId);
       if (params.status) qs.set("status", params.status);
+      if (params.role) qs.set("role", params.role);
       if (params.limit) qs.set("limit", String(params.limit));
       if (params.offset) qs.set("offset", String(params.offset));
       const r = await apiFetch<SessionListResponse>(`/api/sessions?${qs}`);
@@ -63,7 +61,7 @@ export function useSessionList(params: {
     } finally {
       setLoading(false);
     }
-  }, [params.projectId, params.status, params.limit, params.offset]);
+  }, [params.projectId, params.status, params.role, params.limit, params.offset]);
 
   useEffect(() => { load(); }, [load]);
   useRefetchOnSessionSync(load);
@@ -98,53 +96,21 @@ export function useSessionDetail(sessionId: string | null) {
   return { data, loading, error, refetch: load };
 }
 
-// ─── 映射列表 hook ──────────────────────────────────────────────────────────
+// ─── 打标签纠错（US-10：manual_role 覆写；成功后广播刷新各会话列表） ─────────
 
-export function useMappingList(projectId?: string) {
-  const [data, setData] = useState<MappingListResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const qs = projectId ? `?project_id=${encodeURIComponent(projectId)}` : "";
-      const r = await apiFetch<MappingListResponse>(`/api/mappings${qs}`);
-      setData(r);
-    } catch (e) {
-      setError(String((e as Error)?.message ?? e));
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  useEffect(() => { load(); }, [load]);
-  useRefetchOnSessionSync(load);
-
-  return { data, loading, error, refetch: load };
-}
-
-// ─── 创建/更新映射 ──────────────────────────────────────────────────────────
-
-export async function saveMapping(input: {
-  session_id: string;
-  project_id: string;
-  role: string;
-  note?: string;
-}): Promise<SessionMapping> {
-  return apiFetch<SessionMapping>("/api/mappings", {
-    method: "POST",
-    body: JSON.stringify(input),
+export async function setSessionRole(sessionId: string, role: string): Promise<void> {
+  await apiFetch<{ ok: boolean }>("/api/sessions/role", {
+    method: "PUT",
+    body: JSON.stringify({ session_id: sessionId, role }),
   });
+  window.dispatchEvent(new CustomEvent(SESSION_SYNC_EVENT));
 }
 
-// ─── 删除映射 ──────────────────────────────────────────────────────────────
-
-export async function deleteMapping(sessionId: string): Promise<void> {
-  await apiFetch<{ ok: boolean }>(`/api/mappings?session_id=${encodeURIComponent(sessionId)}`, {
+export async function clearSessionRole(sessionId: string): Promise<void> {
+  await apiFetch<{ ok: boolean }>(`/api/sessions/role?session_id=${encodeURIComponent(sessionId)}`, {
     method: "DELETE",
   });
+  window.dispatchEvent(new CustomEvent(SESSION_SYNC_EVENT));
 }
 
 // ─── 触发同步 ──────────────────────────────────────────────────────────────

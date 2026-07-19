@@ -2,21 +2,16 @@ import { useState, useMemo, useEffect } from "react";
 import {
   useSessionList,
   useSessionDetail,
-  useMappingList,
   useTimelineVersions,
   useTimelineDetail,
-  saveMapping,
-  deleteMapping,
+  setSessionRole,
   triggerSync,
-  apiFetch,
 } from "../useProjectSession";
-import type { ClaudeSession, ClaudeMessage, Project, SessionPreviewMessage, TimelineStage, TimelineStageStatus, TimelineVersionStatus } from "../snapshot";
+import type { ClaudeSession, ClaudeMessage, Project, TimelineStage, TimelineStageStatus, TimelineVersionStatus } from "../snapshot";
 import {
   MessageSquare,
   RefreshCw,
-  Search,
   ChevronRight,
-  CheckCircle2,
   Circle,
   X,
   AlertCircle,
@@ -26,7 +21,6 @@ import {
   Layers,
   Flag,
   Bot,
-  User,
   Boxes,
   Hammer,
   Sparkles,
@@ -74,11 +68,9 @@ type View =
 interface EcosystemViewProps {
   projects: Project[];
   onSessionClick: (sessionId: string) => void;
-  onRefreshMappings: () => void;
-  mappingsVersion: number;
 }
 
-export function EcosystemView({ projects, onSessionClick, onRefreshMappings, mappingsVersion }: EcosystemViewProps) {
+export function EcosystemView({ projects, onSessionClick }: EcosystemViewProps) {
   const [view, setView] = useState<View>({ kind: "ecosystem" });
 
   if (view.kind === "subproject") {
@@ -92,8 +84,6 @@ export function EcosystemView({ projects, onSessionClick, onRefreshMappings, map
         project={project}
         onBack={() => setView({ kind: "ecosystem" })}
         onSessionClick={onSessionClick}
-        mappingsVersion={mappingsVersion}
-        onRefreshMappings={onRefreshMappings}
       />
     );
   }
@@ -103,7 +93,6 @@ export function EcosystemView({ projects, onSessionClick, onRefreshMappings, map
       projects={projects}
       onSubProjectClick={(id) => setView({ kind: "subproject", projectId: id })}
       onSessionClick={onSessionClick}
-      mappingsVersion={mappingsVersion}
     />
   );
 }
@@ -114,26 +103,15 @@ function EcosystemRootView({
   projects,
   onSubProjectClick,
   onSessionClick,
-  mappingsVersion,
 }: {
   projects: Project[];
   onSubProjectClick: (id: string) => void;
   onSessionClick: (sessionId: string) => void;
-  mappingsVersion: number;
 }) {
   // 按 kind 拆分
   const rootComponents = projects.filter((p) => p.kind === "workflow-source" || p.kind === "coordination");
   const subProjects = projects.filter((p) => p.kind === "business" || p.kind === "workboard");
 
-  // 拉所有映射，按 project_id 分组
-  const { data: mappingsData } = useMappingList();
-  const mappingsByProject = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const it of mappingsData?.items ?? []) {
-      m.set(it.project_id, (m.get(it.project_id) ?? 0) + 1);
-    }
-    return m;
-  }, [mappingsData, mappingsVersion]);
 
   return (
     <div className="space-y-6">
@@ -161,8 +139,6 @@ function EcosystemRootView({
             <SubProjectCard
               key={p.id}
               project={p}
-              mappedCount={mappingsByProject.get(p.id) ?? 0}
-              totalRoles={ROLES.length}
               onClick={() => onSubProjectClick(p.id)}
             />
           ))}
@@ -229,35 +205,9 @@ function SyncBar() {
 // ─── 参谋长席位卡片 ──────────────────────────────────────────────────────
 
 function ChiefOfStaffCard({ onSessionClick }: { onSessionClick?: (sessionId: string) => void }) {
-  const [showDialog, setShowDialog] = useState(false);
-  const { data: mappingData, refetch } = useMappingList("ecosystem-root");
-  const [sessionTitle, setSessionTitle] = useState<string | null>(null);
-  const [lastMessageAt, setLastMessageAt] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-
-  const mapping = mappingData?.items?.find((m) => m.role === "chief-of-staff");
-
-  // 映射变化时，拉取会话详情显示标题
-  useEffect(() => {
-    if (!mapping?.session_id) {
-      setSessionTitle(null);
-      setLastMessageAt(null);
-      setSessionId(null);
-      return;
-    }
-    setSessionId(mapping.session_id);
-    apiFetch<{ session: ClaudeSession }>(`/api/sessions/details?id=${mapping.session_id}`)
-      .then((r) => {
-        setSessionTitle(r.session?.title || "(无标题)");
-        setLastMessageAt(r.session?.last_message_at || null);
-      })
-      .catch(() => {
-        setSessionTitle("(会话已删除)");
-        setLastMessageAt(null);
-      });
-  }, [mapping?.session_id]);
-
-  const mapped = !!sessionId;
+  // M-1 模型下无 chief-of-staff 手动映射：参谋长席位 = 生态根最新活跃会话（自动，免配置）
+  const { data } = useSessionList({ projectId: "ecosystem-root", limit: 1 });
+  const latest = data?.items?.[0] ?? null;
 
   return (
     <div className="bg-white rounded-xl border border-[#030213]/15 p-5">
@@ -268,131 +218,32 @@ function ChiefOfStaffCard({ onSessionClick }: { onSessionClick?: (sessionId: str
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">参谋长席位</p>
-            <p className="text-xs text-muted-foreground mt-0.5">niuma-cheng 生态根会话</p>
-            {mapped ? (
+            <p className="text-xs text-muted-foreground mt-0.5">niuma-cheng 生态根会话 · 自动取最新</p>
+            {latest ? (
               <div className="mt-2 space-y-0.5">
-                <p className="text-sm text-foreground truncate">{sessionTitle}</p>
-                <p className="text-xs text-muted-foreground">最近活动 {relTime(lastMessageAt)}</p>
+                <p className="text-sm text-foreground truncate">{latest.title || "（无标题）"}</p>
+                <p className="text-xs text-muted-foreground">最近活动 {relTime(latest.last_message_at)}</p>
               </div>
             ) : (
               <div className="mt-2">
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded">
-                  <Circle className="h-2.5 w-2.5" /> 未选择
+                  <Circle className="h-2.5 w-2.5" /> 暂无会话
                 </span>
               </div>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {mapped && sessionId && (
-            <button
-              onClick={() => onSessionClick?.(sessionId)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              <MessagesSquare className="h-3.5 w-3.5" />
-              查看对话
-            </button>
-          )}
+        {latest && (
           <button
-            onClick={() => setShowDialog(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white border border-border rounded-lg hover:bg-accent transition-colors"
+            onClick={() => onSessionClick?.(latest.id)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity"
           >
-            <Settings className="h-3.5 w-3.5" />
-            {mapped ? "重新配置" : "配置"}
+            <MessagesSquare className="h-3.5 w-3.5" />
+            查看对话
           </button>
-        </div>
+        )}
       </div>
-
-      {showDialog && (
-        <ChiefOfStaffDialog
-          existingMapping={mapping ? { sessionId: mapping.session_id, note: mapping.note } : undefined}
-          onClose={() => setShowDialog(false)}
-          onSaved={() => { refetch(); setShowDialog(false); }}
-        />
-      )}
     </div>
-  );
-}
-
-// ─── 参谋长席位配置弹窗（单步） ──────────────────────────────────────────
-
-function ChiefOfStaffDialog({
-  existingMapping,
-  onClose,
-  onSaved,
-}: {
-  existingMapping?: { sessionId: string; note?: string | null };
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const { data: sessionData, loading, error: sessionError } = useSessionList({ projectId: "ecosystem-root", limit: 100 });
-  const [selected, setSelected] = useState<string>(existingMapping?.sessionId ?? "");
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const handleConfirm = async () => {
-    if (!selected) return;
-    setSaving(true);
-    setErr(null);
-    try {
-      await saveMapping({
-        session_id: selected,
-        project_id: "ecosystem-root",
-        role: "chief-of-staff",
-        note: existingMapping?.note || undefined,
-      });
-      onSaved();
-    } catch (e) {
-      setErr(String((e as Error)?.message ?? e));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <DialogShell title="配置参谋长席位" onClose={onClose}>
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground">映射目标：</span>
-          <span className="px-2 py-1 bg-gray-50 border border-border rounded text-foreground font-medium">
-            niuma-cheng 生态
-          </span>
-          <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-          <span className="px-2 py-1 bg-gray-50 border border-border rounded text-foreground font-medium">
-            参谋长
-          </span>
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">选择会话</label>
-          <SessionSelect
-            sessions={sessionData?.items ?? []}
-            loading={loading}
-            loadError={sessionError}
-            value={selected}
-            onChange={setSelected}
-          />
-        </div>
-
-        {err && <div className="text-xs text-red-600">{err}</div>}
-
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            取消
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!selected || saving}
-            className="px-4 py-1.5 text-sm font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {saving ? "保存中..." : "确认配置"}
-          </button>
-        </div>
-      </div>
-    </DialogShell>
   );
 }
 
@@ -432,13 +283,9 @@ function ReadOnlyRootCard({ project }: { project: Project }) {
 
 function SubProjectCard({
   project,
-  mappedCount,
-  totalRoles,
   onClick,
 }: {
   project: Project;
-  mappedCount: number;
-  totalRoles: number;
   onClick: () => void;
 }) {
   return (
@@ -457,13 +304,6 @@ function SubProjectCard({
         <span className="text-xs px-1.5 py-0.5 rounded bg-[#030213]/5 text-[#030213]/50 border border-[#030213]/10 uppercase tracking-wide">
           {project.kind === "workboard" ? "工具" : "业务"}
         </span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${
-          mappedCount > 0
-            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-            : "bg-gray-100 text-gray-500 border border-gray-200"
-        }`}>
-          {mappedCount}/{totalRoles} 已映射
-        </span>
       </div>
     </button>
   );
@@ -475,30 +315,37 @@ function SubProjectView({
   project,
   onBack,
   onSessionClick,
-  mappingsVersion,
-  onRefreshMappings,
 }: {
   project: Project;
   onBack: () => void;
   onSessionClick: (sessionId: string) => void;
-  mappingsVersion: number;
-  onRefreshMappings: () => void;
 }) {
-  const { data: mappingsData, refetch } = useMappingList(project.id);
-  useEffect(() => { refetch(); }, [mappingsVersion, refetch]);
+  const { data: sessionData, loading: sessionsLoading, error: sessionsError } = useSessionList({ projectId: project.id, limit: 200 });
+  const [drawerRole, setDrawerRole] = useState<string | null>(null);
 
-  const mappingsByRole = useMemo(() => {
-    const m = new Map<string, { sessionId: string; note?: string | null; sessionTitle?: string | null; lastMessageAt?: string | null }>();
-    for (const it of mappingsData?.items ?? []) {
-      m.set(it.role, {
-        sessionId: it.session_id,
-        note: it.note,
-        sessionTitle: it.session_title,
-        lastMessageAt: it.last_message_at,
-      });
+  // M-1 归类：按 resolved_role 分组（1:N），组内按最近活动倒序
+  const sessionsByRole = useMemo(() => {
+    const m = new Map<string, ClaudeSession[]>();
+    for (const s of sessionData?.items ?? []) {
+      const role = s.resolved_role ?? "General";
+      if (!m.has(role)) m.set(role, []);
+      m.get(role)!.push(s);
+    }
+    for (const list of m.values()) {
+      list.sort((a, b) => new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime());
     }
     return m;
-  }, [mappingsData]);
+  }, [sessionData]);
+
+  // 时间轴「查看对话」兼容：角色 → 当前会话（该角色最新一条）
+  const mappingsByRole = useMemo(() => {
+    const m = new Map<string, { sessionId: string; note?: string | null; sessionTitle?: string | null; lastMessageAt?: string | null }>();
+    for (const [role, list] of sessionsByRole) {
+      const latest = list[0];
+      if (latest) m.set(role, { sessionId: latest.id, sessionTitle: latest.title, lastMessageAt: latest.last_message_at });
+    }
+    return m;
+  }, [sessionsByRole]);
 
   return (
     <div className="space-y-5">
@@ -522,25 +369,37 @@ function SubProjectView({
         onSessionClick={onSessionClick}
       />
 
-      {/* 5 个角色卡片 */}
+      {/* 5 个角色入口卡片（点击开对话抽屉） */}
       <div>
-        <SectionLabel>角色映射（{mappingsByRole.size}/{ROLES.length} 已映射）</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {ROLES.map((r) => {
-            const mapping = mappingsByRole.get(r.id);
-            return (
+        <SectionLabel>角色会话（{sessionData?.total ?? 0} 个会话按角色归类）</SectionLabel>
+        {sessionsError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+            <p className="text-xs text-red-600">会话加载失败：{sessionsError}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {ROLES.map((r) => (
               <RoleCard
                 key={r.id}
                 role={r}
-                project={project}
-                mapping={mapping}
-                onSessionClick={onSessionClick}
-                onMapped={onRefreshMappings}
+                sessions={sessionsByRole.get(r.id) ?? []}
+                loading={sessionsLoading}
+                onOpen={() => setDrawerRole(r.id)}
               />
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* 第二级：对话抽屉（左角色菜单 + 当前/历史 + 正文 + 打标签） */}
+      {drawerRole && (
+        <ConversationDrawer
+          project={project}
+          sessionsByRole={sessionsByRole}
+          initialRole={drawerRole}
+          onClose={() => setDrawerRole(null)}
+        />
+      )}
     </div>
   );
 }
@@ -766,19 +625,16 @@ function StageRow({
 
 function RoleCard({
   role,
-  project,
-  mapping,
-  onSessionClick,
-  onMapped,
+  sessions,
+  loading,
+  onOpen,
 }: {
   role: typeof ROLES[number];
-  project: Project;
-  mapping?: { sessionId: string; note?: string | null; sessionTitle?: string | null; lastMessageAt?: string | null };
-  onSessionClick: (sessionId: string) => void;
-  onMapped: () => void;
+  sessions: ClaudeSession[];
+  loading: boolean;
+  onOpen: () => void;
 }) {
-  const [showDialog, setShowDialog] = useState(false);
-  const isMapped = !!mapping;
+  const latest = sessions[0] ?? null;
 
   return (
     <div className="bg-white rounded-xl border border-border p-4 flex flex-col gap-3">
@@ -792,435 +648,388 @@ function RoleCard({
             <p className="text-xs font-mono text-muted-foreground">{role.label}</p>
           </div>
         </div>
-        {isMapped ? (
-          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="h-3 w-3" /> 已映射
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
-            <Circle className="h-2.5 w-2.5" /> 未选择
-          </span>
-        )}
+        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+          sessions.length > 0
+            ? "bg-[#030213]/5 text-[#030213]/70 border border-[#030213]/10"
+            : "bg-gray-100 text-gray-500 border border-gray-200"
+        }`}>
+          {loading ? "…" : `${sessions.length} 个会话`}
+        </span>
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">{role.desc}</p>
 
-      {isMapped && (
+      {latest && (
         <div className="rounded-lg bg-[#f6f7f9] border border-border/60 p-2.5">
-          <p className="text-xs text-foreground truncate font-medium">
-            {mapping?.sessionTitle ?? "（无标题）"}
+          <p className="text-xs text-foreground truncate font-medium">{latest.title || "（无标题）"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+            <span>最近活动 {relTime(latest.last_message_at)}</span>
+            {latest.iteration_label && <IterationBadge label={latest.iteration_label} />}
+            <SourceBadge source={latest.source} />
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            最近活动 {relTime(mapping?.lastMessageAt ?? null)}
-          </p>
-          {mapping?.note && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{mapping.note}</p>
-          )}
         </div>
       )}
 
       <div className="flex items-center gap-2 mt-auto pt-1">
-        {isMapped ? (
-          <>
-            <button
-              onClick={() => mapping?.sessionId && onSessionClick(mapping.sessionId)}
-              className="flex-1 px-3 py-1.5 text-xs font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              查看对话
-            </button>
-            <button
-              onClick={() => setShowDialog(true)}
-              className="px-3 py-1.5 text-xs font-medium bg-white border border-border rounded-lg hover:bg-accent transition-colors"
-            >
-              重新配置
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setShowDialog(true)}
-            className="flex-1 px-3 py-1.5 text-xs font-medium bg-white border border-border rounded-lg hover:bg-accent transition-colors flex items-center justify-center gap-1.5"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            配置映射
-          </button>
-        )}
+        <button
+          onClick={onOpen}
+          className="flex-1 px-3 py-1.5 text-xs font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity"
+        >
+          查看对话
+        </button>
       </div>
-
-      {showDialog && (
-        <MappingDialog
-          project={project}
-          defaultRole={role.id}
-          existingMapping={mapping ? { sessionId: mapping.sessionId, note: mapping.note } : undefined}
-          onClose={() => setShowDialog(false)}
-          onSaved={() => {
-            setShowDialog(false);
-            onMapped();
-          }}
-        />
-      )}
     </div>
   );
 }
 
-// ─── 角色映射配置弹窗（单步：项目+角色已由点击上下文确定） ───────────────
+// ─── 徽章：迭代标签（US-5，恒标注推断）与来源标签（US-12） ─────────────────
 
-function MappingDialog({
+function IterationBadge({ label, full }: { label: string | null | undefined; full?: boolean }) {
+  if (!label) {
+    return (
+      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200">
+        {full ? "迭代未归属" : "未归属"}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200"
+      title="按项目 INDEX 的 git 历史区间推断，尽力而为"
+    >
+      {full ? `所属迭代 ${label} · 推断` : label}
+    </span>
+  );
+}
+
+function SourceBadge({ source }: { source: string | null | undefined }) {
+  const isCodex = source === "codex";
+  return (
+    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+      isCodex ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-[#030213]/5 text-[#030213]/60 border-[#030213]/10"
+    }`}>
+      {isCodex ? "Codex" : "Claude"}
+    </span>
+  );
+}
+
+// ─── 对话抽屉（A 组核心：左角色菜单 + 当前/历史 + 打标签 + 正文） ──────────
+
+function ConversationDrawer({
   project,
-  defaultRole,
-  existingMapping,
+  sessionsByRole,
+  initialRole,
   onClose,
-  onSaved,
 }: {
   project: Project;
-  defaultRole: string;
-  existingMapping?: { sessionId: string; note?: string | null };
+  sessionsByRole: Map<string, ClaudeSession[]>;
+  initialRole: string;
   onClose: () => void;
-  onSaved: () => void;
 }) {
-  // 项目和角色由调用上下文确定，弹窗内不再让用户选
-  const [selectedSessionId, setSelectedSessionId] = useState(existingMapping?.sessionId ?? "");
-  const [note, setNote] = useState(existingMapping?.note ?? "");
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [activeRole, setActiveRole] = useState(initialRole);
+  // US-11：当前会话为前端临时 state（选择即当前；刷新/切项目丢失回落默认最新）
+  const [currentByRole, setCurrentByRole] = useState<Record<string, string>>({});
+  const [dragOverRole, setDragOverRole] = useState<string | null>(null);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [tagError, setTagError] = useState<string | null>(null);
 
-  const role = ROLES.find((r) => r.id === defaultRole);
-  const { data: sessionData, loading: sessionLoading, error: sessionError } = useSessionList({ projectId: project.id, limit: 100 });
+  const roleSessions = sessionsByRole.get(activeRole) ?? [];
+  const chosenId = currentByRole[activeRole];
+  const currentSession = roleSessions.find((s) => s.id === chosenId) ?? roleSessions[0] ?? null;
+  const historySessions = roleSessions.filter((s) => s.id !== currentSession?.id);
 
-  const handleSave = async () => {
-    if (!selectedSessionId) return;
-    setSaving(true);
-    setErr(null);
+  const { data: detail, loading: detailLoading, error: detailError } = useSessionDetail(currentSession?.id ?? null);
+
+  const handleTag = async (sessionId: string, role: string) => {
+    setMenuFor(null);
+    setTagError(null);
     try {
-      await saveMapping({
-        session_id: selectedSessionId,
-        project_id: project.id,
-        role: defaultRole,
-        note: note || undefined,
-      });
-      onSaved();
+      await setSessionRole(sessionId, role); // 成功后广播事件，父级会话列表自动刷新
     } catch (e) {
-      setErr(String((e as Error)?.message ?? e));
-    } finally {
-      setSaving(false);
+      setTagError(String((e as Error)?.message ?? e));
     }
   };
 
-  return (
-    <DialogShell title="配置角色映射" onClose={onClose}>
-      <div className="space-y-4">
-        {/* 顶部一行紧凑 badge：项目 + 角色（都由点击上下文确定，只读） */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground">映射目标：</span>
-          <span className="px-2 py-1 bg-gray-50 border border-border rounded text-foreground font-medium max-w-[50%] truncate">
-            {project.name}
-          </span>
-          <ChevronRight className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />
-          <span className="px-2 py-1 bg-gray-50 border border-border rounded text-foreground font-medium flex-shrink-0">
-            {role?.zhLabel ?? defaultRole}
-          </span>
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">选择会话</label>
-          <SessionSelect
-            sessions={sessionData?.items ?? []}
-            loading={sessionLoading}
-            loadError={sessionError}
-            value={selectedSessionId}
-            onChange={setSelectedSessionId}
-            highlightRole={defaultRole}
-          />
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">备注（可选）</label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="这个会话做了什么..."
-            rows={2}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:border-[#030213]/30 resize-none"
-          />
-        </div>
-
-        {err && <div className="text-xs text-red-600">{err}</div>}
-
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            取消
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!selectedSessionId || saving}
-            className="px-4 py-1.5 text-sm font-medium bg-[#030213] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {saving ? "保存中..." : "确认配置"}
-          </button>
-        </div>
-      </div>
-    </DialogShell>
-  );
-}
-
-// ─── 会话下拉选择 ─────────────────────────────────────────────────────────
-
-function SessionSelect({
-  sessions,
-  loading,
-  loadError,
-  value,
-  onChange,
-  highlightRole,
-}: {
-  sessions: ClaudeSession[];
-  loading: boolean;
-  loadError?: string | null;
-  value: string;
-  onChange: (v: string) => void;
-  highlightRole?: string;
-}) {
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-
-  // 附加后端同步时识别的角色（前置处理，Unknown 不展示标签）
-  const sessionsWithRole = useMemo(() => {
-    return sessions.map((s) => ({
-      ...s,
-      inferredRole: s.detected_role && s.detected_role !== "Unknown" ? s.detected_role : null,
-    }));
-  }, [sessions]);
-
-  const filtered = useMemo(() => {
-    let list = sessionsWithRole;
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (s) => s.title?.toLowerCase().includes(q) || s.project_name?.toLowerCase().includes(q)
-      );
-    }
-    // 排序：当前选择角色匹配的会话优先；其次按最近活动时间倒序
-    if (highlightRole) {
-      list = [...list].sort((a, b) => {
-        const aMatch = a.inferredRole === highlightRole ? 0 : 1;
-        const bMatch = b.inferredRole === highlightRole ? 0 : 1;
-        if (aMatch !== bMatch) return aMatch - bMatch;
-        return new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime();
-      });
-    } else {
-      list = [...list].sort(
-        (a, b) => new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime()
-      );
-    }
-    return list;
-  }, [sessionsWithRole, search, highlightRole]);
-
-  const selected = sessions.find((s) => s.id === value);
-  const matchCount = highlightRole
-    ? sessionsWithRole.filter((s) => s.inferredRole === highlightRole).length
-    : 0;
-
-  return (
-    <div className="space-y-2">
-      {/* 当前选择/触发器 */}
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full px-3 py-2 text-sm bg-white border border-border rounded-lg flex items-center justify-between hover:bg-accent/30 transition-colors"
-      >
-        <span className={selected ? "text-foreground truncate" : "text-muted-foreground"}>
-          {selected ? selected.title : loading ? "加载中..." : "请选择会话"}
-        </span>
-        <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
-      </button>
-
-      {/* 内联展开列表（占位高度，避免双重滚动） */}
-      {open && (
-        <div className="bg-white border border-border rounded-lg overflow-hidden flex flex-col">
-          <div className="p-2 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜索标题/项目..."
-                className="w-full pl-7 pr-2 py-1.5 text-xs bg-[#f6f7f9] border border-border rounded focus:outline-none focus:border-[#030213]/30"
-                autoFocus
-              />
-            </div>
-            {highlightRole && (
-              <p className="text-[11px] text-muted-foreground mt-1.5 px-0.5">
-                推断匹配 <span className="font-medium text-foreground">{roleLabel(highlightRole)}</span> 的会话已置顶
-                {matchCount > 0 && <span>（共 {matchCount} 个）</span>}
-              </p>
-            )}
-          </div>
-          <div className="overflow-y-auto max-h-[300px]">
-            {loadError ? (
-              <p className="text-xs text-red-600 px-3 py-4 text-center">
-                会话数据加载失败（{loadError}）——请检查数据库连接（本地开发需 SSH 隧道在线）后重试
-              </p>
-            ) : filtered.length === 0 ? (
-              <p className="text-xs text-muted-foreground px-3 py-4 text-center">
-                {loading ? "加载中..." : "无匹配会话"}
-              </p>
-            ) : (
-              filtered.map((s) => {
-                const isSelected = value === s.id;
-                const isMatched = highlightRole && s.inferredRole === highlightRole;
-                const shortId = s.id ? s.id.slice(0, 8) : "";
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => {
-                      onChange(s.id);
-                      setOpen(false);
-                      setSearch("");
-                    }}
-                    className={`w-full text-left px-3 py-2.5 hover:bg-accent/40 transition-colors border-b border-border/30 ${
-                      isSelected ? "bg-[#030213]/5" : ""
-                    } ${isMatched ? "border-l-2 border-l-[#030213]" : ""}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">{s.title || "（无标题）"}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
-                          {s.source === "codex" && (
-                            <span className="px-1 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 text-[10px]">Codex</span>
-                          )}
-                          <span>{s.project_name}</span>
-                          <span>·</span>
-                          <span>{s.message_count} 条</span>
-                          <span>·</span>
-                          <span>{relTime(s.last_message_at)}</span>
-                          <span>·</span>
-                          <span className="font-mono text-[10px] text-muted-foreground/70">id: {shortId}</span>
-                        </p>
-                        {s.last_messages && s.last_messages.length > 0 && (
-                          <div className="mt-1.5 space-y-1">
-                            {s.last_messages.slice(0, 2).map((m, i) => (
-                              <SessionPreviewRow key={i} msg={m} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {s.inferredRole && (
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${
-                          isMatched
-                            ? "bg-[#030213] text-white"
-                            : "bg-[#030213]/5 text-[#030213]/60 border border-[#030213]/10"
-                        }`}>
-                          {roleLabel(s.inferredRole)}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
+  // 会话行（当前 + 历史共用）：标题 / 时间 / 迭代标签 / 来源标签 + ⌄改角色菜单；可拖拽
+  const SessionRow = ({ s, isCurrent }: { s: ClaudeSession; isCurrent: boolean }) => (
+    <div
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData("text/session-id", s.id)}
+      onClick={() => setCurrentByRole((m) => ({ ...m, [activeRole]: s.id }))}
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+        isCurrent ? "bg-[#030213]/5 border border-[#030213]/15" : "hover:bg-accent/40 border border-transparent"
+      }`}
+    >
+      {isCurrent && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#030213] text-white flex-shrink-0">当前</span>
       )}
+      <span className="text-sm text-foreground truncate flex-1 min-w-0">{s.title || "（无标题）"}</span>
+      <span className="text-xs text-muted-foreground flex-shrink-0">{relTime(s.last_message_at)}</span>
+      <IterationBadge label={s.iteration_label} />
+      <SourceBadge source={s.source} />
+      <div className="relative flex-shrink-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); setMenuFor(menuFor === s.id ? null : s.id); }}
+          className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground"
+          title="标记为其他角色"
+        >
+          <Tag className="h-3.5 w-3.5" />
+        </button>
+        {menuFor === s.id && (
+          <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-border rounded-lg shadow-lg py-1 w-36">
+            <p className="px-3 py-1 text-[10px] text-muted-foreground">标记为角色</p>
+            {ROLES.filter((r) => r.id !== activeRole).map((r) => (
+              <button
+                key={r.id}
+                onClick={(e) => { e.stopPropagation(); handleTag(s.id, r.id); }}
+                className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-accent transition-colors"
+              >
+                {r.zhLabel}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
-}
 
-// ─── 弹窗外壳 ─────────────────────────────────────────────────────────────
+  const generalPool = activeRole !== "General" ? (sessionsByRole.get("General") ?? []) : [];
 
-function SessionPreviewRow({ msg }: { msg: SessionPreviewMessage }) {
-  const isUser = msg.role === "user";
-  const content = (msg.content || "").replace(/\s+/g, " ").trim();
-  const truncated = content.length > 120 ? content.slice(0, 120) + "…" : content;
-  if (!truncated) return null;
   return (
-    <div className="flex items-start gap-1.5">
-      <span className={`text-[9px] font-mono px-1 py-0.5 rounded flex-shrink-0 mt-0.5 ${
-        isUser ? "bg-blue-100 text-blue-700" : "bg-[#030213] text-white"
-      }`}>
-        {isUser ? "U" : "A"}
-      </span>
-      <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2 break-words">
-        {truncated}
-      </p>
-    </div>
-  );
-}
-
-function DialogShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50">
+      {/* 遮罩 */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="relative bg-white rounded-xl border border-border shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border flex-shrink-0">
-          <h2 className="text-sm font-medium text-foreground">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground">
-            <X className="h-4 w-4" />
-          </button>
+
+      {/* 右侧抽屉面板（~72%） */}
+      <div className="absolute top-0 right-0 h-full w-[72%] min-w-[640px] max-w-full bg-white border-l border-border shadow-xl flex">
+        {/* 左：角色菜单（切角色 + 拖拽放置目标） */}
+        <div className="w-52 flex-shrink-0 border-r border-border bg-[#fafbfc] flex flex-col">
+          <div className="px-4 py-3.5 border-b border-border">
+            <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">角色会话</p>
+          </div>
+          <div className="flex-1 overflow-y-auto py-2 space-y-0.5 px-2">
+            {ROLES.map((r) => {
+              const count = (sessionsByRole.get(r.id) ?? []).length;
+              const isActive = r.id === activeRole;
+              const isDragOver = dragOverRole === r.id;
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => setActiveRole(r.id)}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverRole(r.id); }}
+                  onDragLeave={() => setDragOverRole(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverRole(null);
+                    const id = e.dataTransfer.getData("text/session-id");
+                    if (id) handleTag(id, r.id);
+                  }}
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    isActive
+                      ? "bg-[#030213] text-white"
+                      : isDragOver
+                        ? "bg-[#030213]/10 text-foreground ring-1 ring-[#030213]/30"
+                        : "text-foreground hover:bg-accent"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 min-w-0">
+                    <r.icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-white" : "text-[#030213]/60"}`} />
+                    <span className="truncate">{r.zhLabel}</span>
+                  </span>
+                  <span className={`text-xs font-mono flex-shrink-0 ${isActive ? "text-white/70" : "text-muted-foreground"}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="px-4 py-3 border-t border-border">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">拖会话到角色改归属，或用会话行的 🏷 菜单</p>
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {children}
+
+        {/* 右：内容区 */}
+        <div className="flex-1 min-w-0 flex flex-col bg-[#f3f5f8]">
+          {/* 顶栏 */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-white flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {currentSession ? (currentSession.title || "（无标题）") : roleLabel(activeRole)}
+                </p>
+                {currentSession && (
+                  <p className="text-xs text-muted-foreground">
+                    {project.name} · {currentSession.message_count} 条消息
+                  </p>
+                )}
+              </div>
+              {currentSession && (
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <IterationBadge label={currentSession.iteration_label} full />
+                  <SourceBadge source={currentSession.source} />
+                </div>
+              )}
+            </div>
+            <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground flex-shrink-0">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {tagError && (
+            <div className="mx-5 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+              <p className="text-xs text-red-600">改归属失败：{tagError}</p>
+            </div>
+          )}
+
+          {roleSessions.length === 0 ? (
+            /* US-3 空态：该角色暂无归属会话 */
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="max-w-xl mx-auto mt-8 text-center space-y-3">
+                <div className="h-12 w-12 mx-auto rounded-xl bg-[#030213]/5 flex items-center justify-center">
+                  {(() => { const R = ROLES.find((r) => r.id === activeRole); return R ? <R.icon className="h-5 w-5 text-[#030213]/50" /> : null; })()}
+                </div>
+                <p className="text-sm text-foreground">「{roleLabel(activeRole)}」还没有归属会话</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  识别错的会话可以拖到左侧角色菜单改归属，或用会话行的 🏷 菜单标记
+                </p>
+              </div>
+              {generalPool.length > 0 && (
+                <div className="max-w-xl mx-auto mt-6">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">从通用助手（General）会话中挑选打标：</p>
+                  <div className="space-y-1 bg-white rounded-xl border border-border p-2">
+                    {generalPool.slice(0, 8).map((s) => (
+                      <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent/40">
+                        <span className="text-sm text-foreground truncate flex-1 min-w-0">{s.title || "（无标题）"}</span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{relTime(s.last_message_at)}</span>
+                        <button
+                          onClick={() => handleTag(s.id, activeRole)}
+                          className="flex-shrink-0 px-2 py-1 text-xs font-medium bg-[#030213] text-white rounded hover:opacity-90 transition-opacity"
+                        >
+                          标为{roleLabel(activeRole)}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* 当前会话 + 历史下拉区 */}
+              <div className="px-5 py-3 border-b border-border bg-white/60 flex-shrink-0 space-y-1">
+                {currentSession && <SessionRow s={currentSession} isCurrent />}
+                {historySessions.length > 0 && (
+                  <details className="group">
+                    <summary className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors list-none">
+                      <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
+                      历史会话（{historySessions.length}）· 可回溯，点击即成为当前
+                    </summary>
+                    <div className="space-y-0.5 mt-1">
+                      {historySessions.map((s) => (
+                        <SessionRow key={s.id} s={s} isCurrent={false} />
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+
+              {/* 对话正文 */}
+              <div className="flex-1 overflow-y-auto px-0 sm:px-5 py-0 sm:py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="min-h-full bg-[#f8fafc] border-x sm:border border-[#d4dce7] sm:rounded-lg shadow-sm">
+                  {detailLoading ? (
+                    <div className="p-5 space-y-4">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="h-3 w-20 bg-[#030213]/[0.08] rounded animate-pulse" />
+                          <div className="h-16 bg-white border border-border/70 rounded-lg animate-pulse" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : detailError ? (
+                    <div className="p-5">
+                      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                        <p className="text-xs text-red-600">{detailError}</p>
+                      </div>
+                    </div>
+                  ) : detail?.messages ? (
+                    <MessageList messages={detail.messages} />
+                  ) : null}
+                </div>
+              </div>
+
+              {/* 底部只读提示 */}
+              <div className="px-5 py-2.5 border-t border-border bg-white flex-shrink-0">
+                <p className="text-xs text-muted-foreground text-center">只读模式 · v0.4+ 将支持直接在此输入消息</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── 对话视图（全屏对话查看器） ───────────────────────────────────────────
+// ─── 对话视图（单会话查看：时间轴/看板钻取入口，右侧抽屉容器） ─────────────
 
 export function ConversationView({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
   const { data, loading, error } = useSessionDetail(sessionId);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#f3f5f8] flex flex-col">
-      {/* 顶部栏 */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-white shadow-sm flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground">
+    <div className="fixed inset-0 z-50">
+      {/* 遮罩 */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={onClose} />
+
+      {/* 右侧抽屉面板（~72%） */}
+      <div className="absolute top-0 right-0 h-full w-[72%] min-w-[640px] max-w-full bg-[#f3f5f8] border-l border-border shadow-xl flex flex-col">
+        {/* 顶部栏 */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-white shadow-sm flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {data?.session.title ?? "加载中..."}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {data?.session.project_name} · {data?.session.message_count ?? 0} 条消息
+              </p>
+            </div>
+            {data?.session && <SourceBadge source={data.session.source} />}
+          </div>
+          <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground flex-shrink-0">
             <X className="h-4 w-4" />
           </button>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {data?.session.title ?? "加载中..."}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {data?.session.project_name} · {data?.session.message_count ?? 0} 条消息
-            </p>
+        </div>
+
+        {/* 对话区 */}
+        <div className="flex-1 overflow-y-auto bg-[#e3e9f0] px-0 sm:px-6 py-0 sm:py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="min-h-full max-w-5xl mx-auto bg-[#f8fafc] border-x sm:border border-[#d4dce7] sm:rounded-lg shadow-sm">
+            {loading ? (
+              <div className="p-5 space-y-4 max-w-4xl mx-auto">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-3 w-20 bg-[#030213]/[0.08] rounded animate-pulse" />
+                    <div className="h-16 bg-white border border-border/70 rounded-lg animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="p-5">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="text-xs text-red-600">{error}</p>
+                </div>
+              </div>
+            ) : data?.messages ? (
+              <MessageList messages={data.messages} />
+            ) : null}
           </div>
         </div>
-      </div>
 
-      {/* 对话区 */}
-      <div className="flex-1 overflow-y-auto bg-[#e3e9f0] px-0 sm:px-6 py-0 sm:py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="min-h-full max-w-5xl mx-auto bg-[#f8fafc] border-x sm:border border-[#d4dce7] sm:rounded-lg shadow-sm">
-          {loading ? (
-            <div className="p-5 space-y-4 max-w-4xl mx-auto">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="space-y-2">
-                  <div className="h-3 w-20 bg-[#030213]/[0.08] rounded animate-pulse" />
-                  <div className="h-16 bg-white border border-border/70 rounded-lg animate-pulse" />
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="p-5">
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                <p className="text-xs text-red-600">{error}</p>
-              </div>
-            </div>
-          ) : data?.messages ? (
-            <MessageList messages={data.messages} />
-          ) : null}
+        {/* 底部只读提示 */}
+        <div className="px-5 py-3 border-t border-border bg-white flex-shrink-0">
+          <p className="text-xs text-muted-foreground text-center">
+            只读模式 · v0.4+ 将支持直接在此输入消息
+          </p>
         </div>
-      </div>
-
-      {/* 底部只读提示 */}
-      <div className="px-5 py-3 border-t border-border bg-white flex-shrink-0">
-        <p className="text-xs text-muted-foreground text-center">
-          只读模式 · v0.3+ 将支持直接在此输入消息
-        </p>
       </div>
     </div>
   );

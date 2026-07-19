@@ -183,11 +183,11 @@ export interface ClaudeSession {
   detected_role?: string | null;
   role_confidence?: number | null;
   source?: string | null;
-  mapping_id?: number | null;
-  mapped_role?: string | null;
+  manual_role?: string | null;
+  resolved_role?: string;
+  iteration_label?: string | null;
+  iteration_inferred?: boolean;
   last_messages?: SessionPreviewMessage[] | null;
-  mapped_project_id?: string | null;
-  mapping_note?: string | null;
 }
 
 export interface ClaudeMessage {
@@ -201,19 +201,6 @@ export interface ClaudeMessage {
   has_thinking: number;
 }
 
-export interface SessionMapping {
-  id: number;
-  session_id: string;
-  project_id: string;
-  role: string;
-  note: string | null;
-  created_at: string;
-  updated_at: string;
-  session_title?: string | null;
-  last_message_at?: string | null;
-  message_count?: number | null;
-}
-
 export interface SessionListResponse {
   items: ClaudeSession[];
   total: number;
@@ -224,11 +211,6 @@ export interface SessionListResponse {
 export interface SessionDetailResponse {
   session: ClaudeSession;
   messages: ClaudeMessage[];
-}
-
-export interface MappingListResponse {
-  items: SessionMapping[];
-  total: number;
 }
 
 export interface SyncResult {
