@@ -732,6 +732,7 @@ function ConversationDrawer({
   const [currentByRole, setCurrentByRole] = useState<Record<string, string>>({});
   const [dragOverRole, setDragOverRole] = useState<string | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [tagError, setTagError] = useState<string | null>(null);
 
   const roleSessions = sessionsByRole.get(activeRole) ?? [];
@@ -817,7 +818,7 @@ function ConversationDrawer({
               return (
                 <button
                   key={r.id}
-                  onClick={() => setActiveRole(r.id)}
+                  onClick={() => { setActiveRole(r.id); setHistoryOpen(false); }}
                   onDragOver={(e) => { e.preventDefault(); setDragOverRole(r.id); }}
                   onDragLeave={() => setDragOverRole(null)}
                   onDrop={(e) => {
@@ -917,21 +918,32 @@ function ConversationDrawer({
             </div>
           ) : (
             <>
-              {/* 当前会话 + 历史下拉区 */}
+              {/* 当前会话 + 历史下拉框（原型图定稿形态：悬浮下拉，不平铺占位） */}
               <div className="px-5 py-3 border-b border-border bg-white/60 flex-shrink-0 space-y-1">
                 {currentSession && <SessionRow s={currentSession} isCurrent />}
                 {historySessions.length > 0 && (
-                  <details className="group">
-                    <summary className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors list-none">
-                      <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
-                      历史会话（{historySessions.length}）· 可回溯，点击即成为当前
-                    </summary>
-                    <div className="space-y-0.5 mt-1">
-                      {historySessions.map((s) => (
-                        <SessionRow key={s.id} s={s} isCurrent={false} />
-                      ))}
-                    </div>
-                  </details>
+                  <div className="relative">
+                    <button
+                      onClick={() => setHistoryOpen((v) => !v)}
+                      className="w-full flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white text-xs text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
+                    >
+                      <span>历史会话（{historySessions.length}）· 可回溯，选中即成为当前</span>
+                      <ChevronRight className={`h-3 w-3 transition-transform ${historyOpen ? "-rotate-90" : "rotate-90"}`} />
+                    </button>
+                    {historyOpen && (
+                      <>
+                        {/* 点击外部关闭 */}
+                        <div className="fixed inset-0 z-20" onClick={() => setHistoryOpen(false)} />
+                        <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-border rounded-lg shadow-lg max-h-72 overflow-y-auto p-1 space-y-0.5">
+                          {historySessions.map((s) => (
+                            <div key={s.id} onClick={() => setHistoryOpen(false)}>
+                              <SessionRow s={s} isCurrent={false} />
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
