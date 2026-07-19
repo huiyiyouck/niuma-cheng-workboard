@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**实现阶段 · R1 后端 + R2 US-5 + R3 A 组前端已完成入库**（R1 = `f67505d`/`aca10cf`；R2 = `ae2a944`；R3 对话抽屉 + 打标签 + 契约切换（P1 债已还）= `22e6a99`，Playwright 端到端全绿）
+- 当前阶段：**实现阶段 · R1~R4 四轮全部完成入库，转 Owner 本地验证**（R1 = `f67505d`/`aca10cf`；R2 = `ae2a944`；R3 = `22e6a99`；R4 = `13d31be`；每轮 Playwright/API 端到端自测全绿）
 - 阻塞项：无
-- 下一步入口：**Developer 继续 R4（C 组菜单 5→3：`App.tsx` `NAV_ITEMS` 收敛看板/项目会话/需求池、部署+接入诊断降级进项目详情抽屉 tab、跨项目收敛需求池四子 tab；D 组 `CrossTodoList` 折叠·前 5 条 + hover 浮层 portal 防 `overflow-hidden` 裁剪；E 组 SPA 404 兜底 + 静态 500/502 页；US-8 沟通抽屉接 `GET /api/communications/detail`）**。R3 遗留一项设计空白决策待 Review 确认：参谋长席位改「生态根最新活跃会话」自动显示（M-1 无 chief-of-staff 枚举）。生产迁移须走 OPS-1 闸口（restart 前 `pg_dump session_mappings`，部署就绪检查）。开发环境：`.env` 指 `workboard_dev` 隔离库（生产 `workboard` 零触碰）
+- 下一步入口：**Owner 在本地测试环境（`localhost:5174`，`workboard_dev` 隔离库）验证 v0.3 全量功能** → 验证通过后实现阶段统一 Review → 部署就绪检查（DevOps：OPS-1 闸口 restart 前 `pg_dump session_mappings`；nginx `error_page` 挂 `50x.html`）→ 生产部署。**遗留待 Review 确认**：① 参谋长席位改「生态根最新活跃会话」自动显示（R3 设计空白决策）；② `iterations` 生产环境 `.git` 可读性（US-5 生产降级已实现,标签全 null 不阻塞）
 
 ## 版本列表
 
