@@ -69,9 +69,12 @@ type View =
 interface EcosystemViewProps {
   projects: Project[];
   onSessionClick: (sessionId: string) => void;
+  // 生态根只读卡片钻取（方案 A ④）：公告板 → 需求池视图；框架真源 → 项目详情抽屉
+  onOpenProject: (projectId: string) => void;
+  onViewCrossProject: () => void;
 }
 
-export function EcosystemView({ projects, onSessionClick }: EcosystemViewProps) {
+export function EcosystemView({ projects, onSessionClick, onOpenProject, onViewCrossProject }: EcosystemViewProps) {
   const [view, setView] = useState<View>({ kind: "ecosystem" });
 
   if (view.kind === "subproject") {
@@ -94,6 +97,8 @@ export function EcosystemView({ projects, onSessionClick }: EcosystemViewProps) 
       projects={projects}
       onSubProjectClick={(id) => setView({ kind: "subproject", projectId: id })}
       onSessionClick={onSessionClick}
+      onOpenProject={onOpenProject}
+      onViewCrossProject={onViewCrossProject}
     />
   );
 }
@@ -104,10 +109,14 @@ function EcosystemRootView({
   projects,
   onSubProjectClick,
   onSessionClick,
+  onOpenProject,
+  onViewCrossProject,
 }: {
   projects: Project[];
   onSubProjectClick: (id: string) => void;
   onSessionClick: (sessionId: string) => void;
+  onOpenProject: (projectId: string) => void;
+  onViewCrossProject: () => void;
 }) {
   // 按 kind 拆分
   const rootComponents = projects.filter((p) => p.kind === "workflow-source" || p.kind === "coordination");
@@ -122,12 +131,16 @@ function EcosystemRootView({
       {/* 顶部：参谋长席位 */}
       <ChiefOfStaffCard onSessionClick={onSessionClick} />
 
-      {/* 中部：生态根维护的组成部分（只读） */}
+      {/* 中部：生态根维护的组成部分（只读，可钻取查看当前表现） */}
       <div>
-        <SectionLabel>生态根维护的组成部分（只读）</SectionLabel>
+        <SectionLabel>生态根维护的组成部分（只读 · 点击查看详情）</SectionLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {rootComponents.map((p) => (
-            <ReadOnlyRootCard key={p.id} project={p} />
+            <ReadOnlyRootCard
+              key={p.id}
+              project={p}
+              onClick={() => (p.kind === "coordination" ? onViewCrossProject() : onOpenProject(p.id))}
+            />
           ))}
         </div>
       </div>
@@ -250,9 +263,12 @@ function ChiefOfStaffCard({ onSessionClick }: { onSessionClick?: (sessionId: str
 
 // ─── 生态根只读卡片（框架真源 / 公告板） ──────────────────────────────────
 
-function ReadOnlyRootCard({ project }: { project: Project }) {
+function ReadOnlyRootCard({ project, onClick }: { project: Project; onClick: () => void }) {
   return (
-    <div className="bg-white rounded-xl border border-border p-4 opacity-90">
+    <button
+      onClick={onClick}
+      className="text-left w-full bg-white rounded-xl border border-border p-4 hover:border-[#030213]/20 hover:shadow-sm transition-all group"
+    >
       <div className="flex items-start gap-3">
         <div className="h-8 w-8 rounded-lg bg-[#030213]/5 flex items-center justify-center flex-shrink-0">
           {project.kind === "workflow-source" ? (
@@ -261,10 +277,13 @@ function ReadOnlyRootCard({ project }: { project: Project }) {
             <MessageSquare className="h-4 w-4 text-[#030213]/60" />
           )}
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
+            <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {project.kind === "workflow-source" ? "框架真源" : "公告板（coordination）"}
+            {project.kind === "workflow-source" ? "框架真源 · 点击看状态详情" : "公告板（coordination）· 点击进需求池"}
           </p>
           {project.kindSummary && (
             <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
@@ -276,7 +295,7 @@ function ReadOnlyRootCard({ project }: { project: Project }) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -733,6 +752,8 @@ function ConversationDrawer({
   const [dragOverRole, setDragOverRole] = useState<string | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // 拖拽进行中：撤掉下拉的「点击外部关闭」透明层，否则它挡住左侧角色菜单接收 drop
+  const [dragging, setDragging] = useState(false);
   const [tagError, setTagError] = useState<string | null>(null);
 
   const roleSessions = sessionsByRole.get(activeRole) ?? [];
@@ -756,7 +777,8 @@ function ConversationDrawer({
   const SessionRow = ({ s, isCurrent }: { s: ClaudeSession; isCurrent: boolean }) => (
     <div
       draggable
-      onDragStart={(e) => e.dataTransfer.setData("text/session-id", s.id)}
+      onDragStart={(e) => { e.dataTransfer.setData("text/session-id", s.id); setDragging(true); }}
+      onDragEnd={() => setDragging(false)}
       onClick={() => setCurrentByRole((m) => ({ ...m, [activeRole]: s.id }))}
       className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
         isCurrent ? "bg-[#030213]/5 border border-[#030213]/15" : "hover:bg-accent/40 border border-transparent"
@@ -824,6 +846,8 @@ function ConversationDrawer({
                   onDrop={(e) => {
                     e.preventDefault();
                     setDragOverRole(null);
+                    setDragging(false);
+                    setHistoryOpen(false);
                     const id = e.dataTransfer.getData("text/session-id");
                     if (id) handleTag(id, r.id);
                   }}
@@ -901,7 +925,13 @@ function ConversationDrawer({
                   <p className="text-xs font-medium text-muted-foreground mb-2">从通用助手（General）会话中挑选打标：</p>
                   <div className="space-y-1 bg-white rounded-xl border border-border p-2">
                     {generalPool.slice(0, 8).map((s) => (
-                      <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent/40">
+                      <div
+                        key={s.id}
+                        draggable
+                        onDragStart={(e) => { e.dataTransfer.setData("text/session-id", s.id); setDragging(true); }}
+                        onDragEnd={() => setDragging(false)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent/40 cursor-grab"
+                      >
                         <span className="text-sm text-foreground truncate flex-1 min-w-0">{s.title || "（无标题）"}</span>
                         <span className="text-xs text-muted-foreground flex-shrink-0">{relTime(s.last_message_at)}</span>
                         <button
@@ -932,8 +962,8 @@ function ConversationDrawer({
                     </button>
                     {historyOpen && (
                       <>
-                        {/* 点击外部关闭 */}
-                        <div className="fixed inset-0 z-20" onClick={() => setHistoryOpen(false)} />
+                        {/* 点击外部关闭（拖拽中撤掉，让角色菜单能接收 drop） */}
+                        {!dragging && <div className="fixed inset-0 z-20" onClick={() => setHistoryOpen(false)} />}
                         <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-border rounded-lg shadow-lg max-h-72 overflow-y-auto p-1 space-y-0.5">
                           {historySessions.map((s) => (
                             <div key={s.id} onClick={() => setHistoryOpen(false)}>

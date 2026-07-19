@@ -1441,6 +1441,8 @@ export default function App() {
                   <EcosystemView
                     projects={vm.projects}
                     onSessionClick={(id) => setConversationSessionId(id)}
+                    onOpenProject={(id) => setDrawerProjectId(id)}
+                    onViewCrossProject={() => handleViewChange("crossproject")}
                   />
                 )}
                 {activeView === "crossproject" && (
