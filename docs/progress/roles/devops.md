@@ -1,5 +1,18 @@
 # DevOps 角色日志
 
+## 2026-07-19 — 会话摘要
+- 本次角色：DevOps（运维/部署工程师）
+- 动作：实现阶段 R1~R5 Review（被指定第二 Review 方，冷启动独立会话，产出方不自审）
+- 涉及文档：`docs/progress/iterations/v0.3.md`（追加「实现阶段 R1~R5 · DevOps Review」+ 门禁 Review 结果/阶段状态）、`docs/progress/INDEX.md`（当前状态/下一步/版本列表）；核对 `src/server/migrations.js`、`migrations/002_session_role_model.sql`、`src/server/db.js`（runSchemaDDL）、`src/server/parsers/iteration-history.js`、`frontend/public/50x.html`、`frontend/package.json`、`frontend/src/app/App.tsx`
+- 结论：**✅ 通过**（部署侧五焦点逐项读码核实，可安全发布，无阻塞）。§6.0 迁移引擎已改整文件 `client.query`+外层事务、`splitSqlStatements` 已删 → `002` DROP 单事务原子；`runSchemaDDL` 已删 session_mappings 建表段（DROP 不复活）；`50x.html` 自包含、构建进 dist；新依赖 `react-markdown`+`remark-gfm` 前端侧、后端无新增。Architect 2026-07-19 已覆盖正确性/安全边界，本 Review 互补只审部署。
+- 新发现 **OPS-5（中·发布流程）**：部署手册 §8 复制步骤 `cp -a src/server/*.js` 会**漏 `migrations/002.sql`** → 生产不跑 002 → `manual_role` 缺列 → `COALESCE` 查询 500。部署须 `cp -a src/server/.` 递归 + 订正手册。已把 8 项部署就绪检查清单预登记进 `v0.3.md`（pg_dump 闸口 / 生产库非 dev / 递归复制 / 前端 install+build / nginx error_page / config 真实克隆路径 / 部署后健康+sync 复查 / 回滚）。
+- 关联迭代：v0.3
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：OPS-1~5 均落部署就绪检查；生产 .git 可读性/nginx error_page/生产 .env 库/config 路径实证留部署阶段（本次为实现 Review，未 SSH 生产）。
+- 下一步入口：两方实现 Review ✅ → 进部署就绪检查 → Owner 新开会话「你是 DevOps」执行生产部署（按清单）→ 生产复验 → Owner 验收。
+- 收尾状态：已收尾
+
 ## 2026-07-18 — 会话摘要
 - 本次角色：DevOps（运维/部署工程师）
 - 动作：设计阶段 R1 Review（被指定第二 Review 方，冷启动独立会话）

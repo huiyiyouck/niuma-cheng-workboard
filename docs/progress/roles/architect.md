@@ -1,5 +1,18 @@
 # Architect 角色日志
 
+## 2026-07-19 — 会话摘要（v0.3 实现阶段 R1~R5 Architect Review）
+- 本次角色：Architect（架构师）
+- 动作：实现阶段独立 Review（审 Developer 实现 vs 设计一致性 + 正确性 + 安全边界）
+- 涉及文档：核实代码 `src/server/migrations.js`（`executeMigration`/退役 `splitSqlStatements`）、`migrations/002_session_role_model.sql`、`db.js`（`runSchemaDDL` 清理）、`index.js`（`RESOLVED_ROLE_SQL`/`/api/sessions`/`role` 端点枚举校验/`communications/detail`）、`parsers/coordination.js`（`readCommunicationDetail` 防穿越）、`parsers/iteration-history.js`（US-5 区间）、`frontend/.../EcosystemView.tsx`（参谋长席位）；产出 `v0.3.md`（Review 记录 + 门禁 5 行 Review 结果/状态）、`INDEX.md`
+- 结论：**✅ 通过**（无阻塞项）。实现与设计高度一致：① §6.0 方案 B 落地（整文件交 PG、`splitSqlStatements` 彻底删除）；② `002` 迁移 + `runSchemaDDL` 清理（DEV-M1）同轮；③ 归类 SQL 与 §2.1 逐字一致；④ API 契约全套（`role` 过滤参数化、`status` 去 JOIN、打标签枚举校验 400、`communications/detail` 防目录穿越 + 无 `sourcePath`、废弃 mappings）；⑤ US-5 半开区间 `[startAt,endAt)` 正确 + `execFile` 防命令注入 + 只读 git + 降级 `[]` + 缓存。安全边界（SQL 参数化 / 防穿越 / 非 shell / 只读不回写）全部到位。**设计空白（参谋长席位）确认接受**：M-1 无 chief-of-staff 枚举，Developer 对生态根改「最新活跃会话自动显示」合理（参谋长非项目内角色、生态根非标准工作流项目），未来若纳一等角色需扩 `VALID_ROLES`+`detectRole`。
+- 非阻塞观察：DEV-L1（`iteration-history` 每 commit 一次 `git show`，未用 `git log -p`，有缓存兜底，留后续）；`npm test` 88/90（2 既有真实数据耦合假失败，已登记待办）；Developer R1 事故（终端乱码致误读虚构幻影 commit/框架事故，事后 `git cat-file` 证实仓库线性完好、零丢失，不影响代码，教训已记）——复核 HEAD 线性、当前代码一致，确认无实质影响。
+- 关联迭代：v0.3（实现阶段 R1~R5 Architect ✅ / 待 DevOps）
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：① DevOps 侧实现 Review 待做（`002` DROP/`pg_dump` 闸口、生产 `.git` 可读性、nginx `error_page`、新前端依赖）；② 参谋长一等角色为未来项。
+- 下一步入口：Owner 新开会话「你是 DevOps」做实现阶段 Review；两方通过后进部署就绪检查。
+- 收尾状态：未收尾（当前会话）
+
 ## 2026-07-18 — 会话摘要（v0.3 设计 §6 回环订正 · 迁移引擎 dollar-quoted bug）
 - 本次角色：Architect（架构师）
 - 动作：阶段回环订正（实现阶段 Developer 发现 → 回设计订正 §6 → 维持定稿 → 流转 Developer 续 R1）

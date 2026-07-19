@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**实现阶段完成 + Owner 本地验证通过（2026-07-19），转独立 Review**（R1 = `f67505d`/`aca10cf`；R2 = `ae2a944`；R3 = `22e6a99`；R4 = `13d31be`；R5 验证反馈修复 = `a1685d8`）
+- 当前阶段：**实现阶段 R1~R5 两方 ✅ 通过**（Architect 2026-07-19 ✅ / DevOps 2026-07-19 ✅，均无阻塞）（R1 = `f67505d`/`aca10cf`；R2 = `ae2a944`；R3 = `22e6a99`；R4 = `13d31be`；R5 = `a1685d8`）
 - 阻塞项：无
-- 下一步入口：**Owner 新开会话冷启动做实现阶段 Review（「你是 Architect」→ 进入 Review，审 R1~R5：M-1 归类/API 契约/迁移引擎/抽屉交互与设计一致性；DevOps 视角一并审部署影响）**。Review 通过后 → **Owner 新开会话「你是 DevOps」执行生产部署**，部署就绪检查含：① OPS-1 闸口——生产 restart 前 `pg_dump` 备份 `session_mappings` 表（002 迁移会 DROP 它）；② nginx `error_page 500 502 503 504` 挂 `dist/50x.html`；③ 生产 `.env` 用生产 `workboard` 库（勿带本地 dev 配置）；④ 部署后验证 `/api/health` 的 `migrations: ok` + 会话迭代标签有值（生产 `.git` 可读性实证）。**Review 需确认的遗留决策**：参谋长席位改「生态根最新活跃会话」自动显示（R3 设计空白，M-1 无 chief-of-staff 枚举）
+- 下一步入口：**进部署就绪检查 → Owner 新开会话「你是 DevOps」执行生产部署**。部署就绪检查清单（DevOps Review 已预登记，见 `v0.3.md`「实现阶段 R1~R5 · DevOps Review」）：① restart 前 `pg_dump -t session_mappings workboard` 强制备份（OPS-1，`002` 惰性自动 DROP 无闸口）；② `cp -a src/server/.` 递归复制含新 `002.sql`+`parsers/iteration-history.js`（**OPS-5：手册 §8 stale 步骤 `cp *.js` 会漏 migrations→manual_role 缺列→查询 500**，部署时并订正手册）；③ `npm --prefix frontend install`→build（新依赖 `react-markdown`+`remark-gfm`）；④ nginx 两套站点加 `error_page 500 502 503 504 /50x.html`（US-9 产物已构建进 dist）；⑤ 生产 `.env` 用生产 `workboard` 库（非 `workboard_dev`）；⑥ 生产 `projects.config.json` 各项目 path 指真实 git 克隆含 workboard 自身（OPS-2）；⑦ 部署后 `/api/health` migrations:ok + sync 复查 `session_mappings` 不复活 + 抽查 `iteration_label` 有值。两方 Review 结论见 `v0.3.md` Review 记录（Architect：设计一致/正确性/安全边界全过；DevOps：部署侧五焦点核实 + OPS-5，均落部署就绪检查不阻塞）
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（设计 §6 已回环订正定稿，Developer 续实现 R1） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（实现 R1~R5 两方 ✅ 通过，进部署就绪检查） |
 
 ## 当前 Change Notes
 
