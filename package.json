@@ -1,6 +1,6 @@
 {
   "name": "niuma-cheng-workboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "项目管理工作台 — 牛马程生态只读聚合看板（本地 Node 服务 + frontend 静态产物）",

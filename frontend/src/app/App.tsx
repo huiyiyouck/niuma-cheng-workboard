@@ -945,6 +945,9 @@ function CrossTodoList() {
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
+// 卡片摘要展示：剥掉 INDEX 原文里的 Markdown 加粗记号（完整内容进详情抽屉看）
+const stripMdMark = (s: string) => s.replace(/\*\*/g, "");
+
 function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
   const isError = project.status === "config-error" || project.status === "read-error";
   const isIterative = project.kind === "business" || project.kind === "workboard";
@@ -983,7 +986,8 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
           {project.phase && (
             <div className="col-span-2">
               <p className="text-xs text-muted-foreground">阶段</p>
-              <p className="text-sm font-medium text-foreground">{project.phase}</p>
+              {/* 长状态截断，完整内容进详情抽屉看 */}
+              <p className="text-sm font-medium text-foreground line-clamp-2">{stripMdMark(project.phase)}</p>
             </div>
           )}
           {pendingTodos > 0 && (
@@ -996,13 +1000,13 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
       )}
 
       {project.kind === "workflow-source" && project.kindSummary && (
-        <p className="text-xs text-muted-foreground leading-relaxed">{project.kindSummary}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{project.kindSummary}</p>
       )}
 
       {project.blocked && (
         <div className="flex items-start gap-1.5 rounded-lg bg-orange-50 border border-orange-100 px-2.5 py-2">
           <AlertTriangle className="h-3 w-3 text-orange-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-orange-700 leading-relaxed">{project.blocked}</p>
+          <p className="text-xs text-orange-700 leading-relaxed line-clamp-2">{stripMdMark(project.blocked)}</p>
         </div>
       )}
 
@@ -1016,7 +1020,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
       {project.nextStep && (
         <div className="flex items-start gap-1.5">
           <ArrowRight className="h-3 w-3 text-[#030213]/30 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-muted-foreground leading-relaxed">{project.nextStep}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{stripMdMark(project.nextStep)}</p>
         </div>
       )}
     </button>
