@@ -150,9 +150,9 @@ async function processProject(p, matcher) {
   }
 
   if (p.kind === "workflow-source") {
-    const { summary: kindSummary } = await readWorkflowSource(real);
+    const { summary: kindSummary, detail: workflowDetail } = await readWorkflowSource(real);
     return {
-      summary: nonCoordSummary(p, "integrated", { kindSummary }, errors),
+      summary: nonCoordSummary(p, "integrated", { kindSummary, workflowDetail }, errors),
       diag: { ...diagBase, status: "integrated" },
     };
   }
@@ -217,6 +217,7 @@ function nonCoordSummary(p, status, data, errors) {
     blocked: data.blocked ?? null,
     nextStep: data.nextStep ?? null,
     kindSummary: data.kindSummary ?? null,
+    workflowDetail: data.workflowDetail ?? null,
     url: p.url,
     roles: data.roles ?? [],
     todos: data.todos ?? [],

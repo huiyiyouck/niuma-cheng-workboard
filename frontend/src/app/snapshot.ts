@@ -36,6 +36,13 @@ export interface Project {
   blocked?: string | null;
   nextStep?: string | null;
   kindSummary?: string;
+  // workflow-source 深度详情（agent-workflow 卡片钻取，PM 2026-07-20 定范围）
+  workflowDetail?: {
+    positioning: string | null;
+    roadmap: { level: number; text: string }[];
+    baseline: { roles: string[]; others: string[] };
+    templates: string[];
+  } | null;
   url?: string;
   configPath: string;
   resolvePath: string;
@@ -309,6 +316,7 @@ export function mapSnapshot(data: SnapshotResult): ViewModel {
       blocked: s?.blocked ?? null,
       nextStep: s?.nextStep ?? null,
       kindSummary: s?.kindSummary ?? undefined,
+      workflowDetail: s?.workflowDetail ?? null,
       url: s?.url ?? undefined,
       configPath: d.configPath ?? "",
       resolvePath: d.resolvedPath ?? "",

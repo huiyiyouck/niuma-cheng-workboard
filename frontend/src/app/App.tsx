@@ -451,6 +451,67 @@ function ProjectDrawerContent({ project }: { project: Project }) {
         </Section>
       )}
 
+      {/* agent-workflow 深度详情（PM 2026-07-20 定范围：定位/路线/基线/模板，全只读） */}
+      {project.kind === "workflow-source" && project.workflowDetail && (
+        <>
+          {project.workflowDetail.positioning && (
+            <Section title="定位">
+              <p className="text-sm text-foreground/80 leading-relaxed">{project.workflowDetail.positioning}</p>
+            </Section>
+          )}
+          {project.workflowDetail.roadmap.length > 0 && (
+            <Section title="演进 / 路线（ROADMAP 章节）">
+              <div className="space-y-1">
+                {project.workflowDetail.roadmap.map((h, i) => (
+                  <p
+                    key={i}
+                    className={`leading-relaxed ${h.level <= 1 ? "text-sm font-medium text-foreground" : h.level === 2 ? "text-sm text-foreground/80" : "text-xs text-muted-foreground"}`}
+                    style={{ paddingLeft: `${Math.max(0, h.level - 1) * 12}px` }}
+                  >
+                    {h.text}
+                  </p>
+                ))}
+              </div>
+            </Section>
+          )}
+          {(project.workflowDetail.baseline.roles.length > 0 || project.workflowDetail.baseline.others.length > 0) && (
+            <Section title={`基线清单（${project.workflowDetail.baseline.roles.length + project.workflowDetail.baseline.others.length}）`}>
+              <div className="space-y-3">
+                {project.workflowDetail.baseline.roles.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">角色手册（{project.workflowDetail.baseline.roles.length}）</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.workflowDetail.baseline.roles.map((f) => (
+                        <span key={f} className="text-xs font-mono px-1.5 py-0.5 rounded bg-[#030213]/5 text-[#030213]/70 border border-[#030213]/10">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {project.workflowDetail.baseline.others.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">机制 / 流程（{project.workflowDetail.baseline.others.length}）</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.workflowDetail.baseline.others.map((f) => (
+                        <span key={f} className="text-xs font-mono px-1.5 py-0.5 rounded bg-accent text-muted-foreground border border-border">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+          {project.workflowDetail.templates.length > 0 && (
+            <Section title={`模板清单（${project.workflowDetail.templates.length}）`}>
+              <div className="flex flex-wrap gap-1.5">
+                {project.workflowDetail.templates.map((f) => (
+                  <span key={f} className="text-xs font-mono px-1.5 py-0.5 rounded bg-accent text-muted-foreground border border-border">{f}</span>
+                ))}
+              </div>
+            </Section>
+          )}
+        </>
+      )}
+
       {isIterative && (
         <Section title="迭代信息">
           <div className="grid grid-cols-2 gap-3 mb-3">
