@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**✅ 已部署生产（待 Owner 生产验收）** — v0.3 全 5 轮实现 + 两方 Review ✅ + 部署就绪检查 ✅ + 2026-07-20 生产部署完成（`b01fe25`）
-- 阻塞项：无
-- 下一步入口：**Owner 从真实网络（尤其公司网络）验收 `https://115.191.43.79`（IP:443）+ 域名 `workboard.huiyiyou.cloud`**——重点看：对话抽屉/角色 1:N/打标签/迭代标签/菜单 5→3/待办折叠/沟通全文/错误页。⚠️ 部署知识记载公司网络曾拦 80/443 标准端口 IP/域名，若访问不到是网络策略问题非部署失败。验收通过 → 迭代关闭检查。部署证据/回滚见 `v0.3.md` 部署就绪检查表。**遗留（非阻塞）**：health `version` 仍 `0.2.0`（`package.json` 未 bump），建议 Developer 后续 bump `0.3.0`。部署实况：`002` 迁移应用（6 行迁移 + chief-of-staff 悬垂值已清理 + `session_mappings` DROP 不复活）、US-5 迭代标签生产有值、US-9 error_page 实测 502→50x.html 兜底
+- 当前阶段：**✅ 已部署生产 + Owner 验收功能通过；但 Owner 提出展示问题待 Developer 修复 → 迭代暂不关闭** — v0.3 全 5 轮实现 + 两方 Review ✅ + 部署就绪检查 ✅ + 2026-07-20 生产部署完成（`b01fe25`）+ Owner 真实网络验收「验证完成，可以跑了/可以访问」
+- 阻塞项：无（展示问题为优化项，非阻塞）
+- 下一步入口：**Owner 找 Developer 修改若干展示问题**（Owner 转达具体项；预计走新一轮实现 fix 或 Change Note，类似 R5 的 Owner 反馈修复）→ Developer 修复自测 → DevOps 重部署 → 再执行迭代关闭检查。迭代关闭检查（2026-07-20 DevOps 执行）技术层 9 项全过判「技术可关闭」，但 Owner 决定暂不关闭。**遗留（非阻塞，带入下轮）**：① health `version` 仍 `0.2.0`（`package.json` 未 bump）建议 Developer 顺手 bump `0.3.0` + systemd unit 描述更新；② `npm test` 2 个既有真实数据耦合假失败已在待办。部署实况/回滚见 `v0.3.md` 部署就绪检查表（`002` 迁移应用 6 行 + chief-of-staff 悬垂值清理 + `session_mappings` DROP 不复活、US-5 迭代标签生产有值、US-9 error_page 实测兜底）
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（✅ 已部署生产 2026-07-20 `b01fe25`，待 Owner 生产验收） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（✅ 已部署生产 2026-07-20 `b01fe25` + 验收功能通过；Owner 提展示问题待 Developer 修复，暂不关闭） |
 
 ## 当前 Change Notes
 
