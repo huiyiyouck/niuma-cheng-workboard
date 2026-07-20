@@ -213,21 +213,31 @@ server {
 
 ```bash
 cd /root/Project/niuma-cheng-workboard
-npm test
+git pull --ff-only origin main
+npm --prefix frontend install   # 前端依赖有增删时必跑（如 v0.3 新增 react-markdown/remark-gfm）
 npm run build
 
-mkdir -p /opt/workboard-prod/app/src/server/parsers
-mkdir -p /opt/workboard-prod/app/frontend
+# ⚠️ 后端必须递归复制（cp -a src/server/.），不要用 `cp -a src/server/*.js`——
+#    通配符只匹配 .js，会漏 migrations/*.sql（如 002_session_role_model.sql），
+#    导致生产不跑迁移、缺列/查询 500（OPS-5，2026-07-20 v0.3 部署确认）。
 cp -a package.json /opt/workboard-prod/app/package.json
-cp -a src/server/*.js /opt/workboard-prod/app/src/server/
-cp -a src/server/parsers/*.js /opt/workboard-prod/app/src/server/parsers/
+cp -a src/server/. /opt/workboard-prod/app/src/server/          # 递归：含 migrations/ sync/ parsers/
+rm -rf /opt/workboard-prod/app/frontend/dist
 cp -a frontend/dist /opt/workboard-prod/app/frontend/
-cp -a frontend/dist/. /var/www/workboard.huiyiyou.cloud/
+cp -a frontend/dist/. /var/www/workboard.huiyiyou.cloud/         # 含 50x.html
 systemctl restart workboard-api-prod.service
 nginx -t && systemctl reload nginx
 ```
 
-生产 `projects.config.json` 放在 `/opt/workboard-prod/app/projects.config.json`，项目数据路径使用绝对路径。不要直接复用开发仓库里的相对路径配置。
+**含数据库迁移的发布（如 v0.3 的 `002` DROP session_mappings）额外纪律**：
+
+- **迁移是惰性自动应用**：`applyMigrations` 只在 `/api/sessions` 族数据端点首次请求时触发（`/api/health`、`/api/snapshot` **不触发**）。`systemctl restart` 后须 `curl http://127.0.0.1:5181/api/sessions?limit=1` 主动触发，再验 `curl /api/health` 达 `migrations:ok`。
+- **含 DROP/不可逆迁移，restart 前强制备份**：`pg_dump -t <表> <库>` + 整库 `pg_dump`（惰性自动应用无人工闸口，一重启第一笔流量就 DROP）。
+- **迁移后验 DDL 清理**：跑一次 `curl -X POST /api/sync`，再查 `SELECT to_regclass('<被DROP表>')` 应为 NULL（防 `runSchemaDDL` 复活空表，DEV-M1）。
+
+生产 `projects.config.json` 放在 `/opt/workboard-prod/app/projects.config.json`，项目数据路径使用绝对路径（各项目须指真实 git 克隆 `/root/Project/niuma-cheng-*`，含 workboard 自身——勿指部署目标 `/opt/workboard-prod/app`，那是 `cp -a` 非 git 目录，会致 US-5 迭代标签恒 null，OPS-2）。不要直接复用开发仓库里的相对路径配置。
+
+**nginx `error_page`（US-9，v0.3 起）**：生产站点 server 块含 `error_page 500 502 503 504 /50x.html;` + `location = /50x.html { internal; }`，后端 502/503/504 时兜出自包含静态页 `50x.html`（随 `frontend/dist` 部署到 web root）。
 
 ## 9. 生产部署注意（移交运维）
 

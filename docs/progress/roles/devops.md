@@ -1,5 +1,19 @@
 # DevOps 角色日志
 
+## 2026-07-20 — 会话摘要
+- 本次角色：DevOps（运维/部署工程师）
+- 动作：v0.3 部署就绪检查 + 生产部署（Owner 授权「你是运维」触发）
+- 涉及文档：`docs/progress/iterations/v0.3.md`（部署就绪检查表两行）、`docs/progress/INDEX.md`、`docs/knowledge/devops/workboard-test-deployment.md`（§8 订正 OPS-5 + 补迁移/error_page 纪律）；生产服务器 `zijie`
+- 结论：**✅ 已部署生产（`b01fe25`），待 Owner 生产验收**。就绪检查全绿；备份闭环（代码 tar + `session_mappings` 6 行 + 整库 13M + nginx conf，存 `/opt/workboard-prod/backup/v0.3-20260719-154503`）；`git pull ad9b706..b01fe25` 快进 + 新前端依赖 install + build；`cp -a src/server/.` 递归（OPS-5 未踩）；`.env`/config 时间戳未变。
+- 迁移实况：**触发点关键教训**——`applyMigrations` 只在 `/api/sessions` 族触发，`/api/health`/`/api/snapshot` **不触发**（首次误用 snapshot 触发失败，读码定位后改 sessions 成功）。`schema_migrations=1,2`、`manual_role` 建列、6 行迁移、`session_mappings` DROP；**chief-of-staff 悬垂值清理**（v0.3 删该枚举，方案A `UPDATE 1`→5 行，Owner 定）；DEV-M1 sync 后表不复活 ✅。
+- 验证：US-5 迭代标签生产有值（v0.1×12/v0.2×7/v0.6×6=.git 可读实证）；resolved_role 分布健康；US-9 error_page 受控停后端实测 502→`50x.html` 兜底、`internal` 直接访问 404。
+- 关联迭代：v0.3
+- 关联非迭代工作：无
+- 关联 Change Note：无
+- 遗留问题/风险：health `version` 仍 `0.2.0`（`package.json` 未 bump，纯标签，建议 Developer 后续 bump `0.3.0` + systemd unit 描述更新 v0.3）；公司网络对 IP/域名 80/443 有拦截历史，Owner 须从真实网络验收。
+- 下一步入口：Owner 从真实网络验收 `https://115.191.43.79` + 域名；通过 → 迭代关闭检查。回滚预案见 `v0.3.md` 部署就绪检查表。
+- 收尾状态：已收尾
+
 ## 2026-07-19 — 会话摘要
 - 本次角色：DevOps（运维/部署工程师）
 - 动作：实现阶段 R1~R5 Review（被指定第二 Review 方，冷启动独立会话，产出方不自审）
