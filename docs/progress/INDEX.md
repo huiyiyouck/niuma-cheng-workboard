@@ -6,9 +6,9 @@
 
 - 当前迭代：v0.3
 - 当前模式：标准迭代
-- 当前阶段：**✅ 已部署生产 + Owner 验收功能通过；但 Owner 提出展示问题待 Developer 修复 → 迭代暂不关闭** — v0.3 全 5 轮实现 + 两方 Review ✅ + 部署就绪检查 ✅ + 2026-07-20 生产部署完成（`b01fe25`）+ Owner 真实网络验收「验证完成，可以跑了/可以访问」
-- 阻塞项：无（展示问题为优化项，非阻塞）
-- 下一步入口：**Owner 找 Developer 修改若干展示问题**（Owner 转达具体项；预计走新一轮实现 fix 或 Change Note，类似 R5 的 Owner 反馈修复）→ Developer 修复自测 → DevOps 重部署 → 再执行迭代关闭检查。迭代关闭检查（2026-07-20 DevOps 执行）技术层 9 项全过判「技术可关闭」，但 Owner 决定暂不关闭。**遗留（非阻塞，带入下轮）**：① health `version` 仍 `0.2.0`（`package.json` 未 bump）建议 Developer 顺手 bump `0.3.0` + systemd unit 描述更新；② `npm test` 2 个既有真实数据耦合假失败已在待办。部署实况/回滚见 `v0.3.md` 部署就绪检查表（`002` 迁移应用 6 行 + chief-of-staff 悬垂值清理 + `session_mappings` DROP 不复活、US-5 迭代标签生产有值、US-9 error_page 实测兜底）
+- 当前阶段：**✅ R6 展示修复已重部署生产（`4d81d5f`，待 Owner 复验）** — v0.3 全 5 轮实现 + 两方 Review ✅ + 部署就绪检查 ✅ + 初次部署（`b01fe25`）Owner 验收功能通过 + R6 展示反馈修复重部署（2026-07-20）
+- 阻塞项：无
+- 下一步入口：**Owner 复验 R6 展示修复**（看板卡片截断防撑爆 / agent-workflow 卡片深度详情 / 其余展示项）`https://115.191.43.79` + 域名 → 通过则**执行迭代关闭检查关闭 v0.3**（技术层 9 项 2026-07-20 已判「技术可关闭」，仅差 Owner 拍板关闭）。R6 部署实况：纯代码重部署无 DB 迁移；health `version` 已转 **`0.3.0`**（version 遗留已收）；`npm test` **92/92 全绿**（假失败遗留已收，Developer fixture 化）；agent-workflow 深度详情后端生效。部署证据/回滚见 `v0.3.md` 部署就绪检查表 R6 行
 
 ## 版本列表
 
@@ -18,7 +18,7 @@
 |------|----------|-----|----|----------|---------|------|
 | v0.1 | [v0.1.md](iterations/v0.1.md) | [v0.1-prd.md](iterations/v0.1-prd.md) | [v0.1-ui.md](iterations/v0.1-ui.md) | [v0.1-design.md](iterations/v0.1-design.md) | [v0.1-summary.md](iterations/v0.1-summary.md) | ✅ 已完成（上线 2026-06-24，收尾产物已入库） |
 | v0.2 | [v0.2.md](iterations/v0.2.md) | [v0.2-prd.md](iterations/v0.2-prd.md) | [v0.2-ui.md](iterations/v0.2-ui.md) | [v0.2-design.md](iterations/v0.2-design.md) | [v0.2-summary.md](iterations/v0.2-summary.md) | ✅ 已完成（上线 2026-07-07，收尾归档完成） |
-| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（✅ 已部署生产 2026-07-20 `b01fe25` + 验收功能通过；Owner 提展示问题待 Developer 修复，暂不关闭） |
+| v0.3 | [v0.3.md](iterations/v0.3.md) | [v0.3-prd.md](iterations/v0.3-prd.md) | 并入 PRD | [v0.3-design.md](iterations/v0.3-design.md) | — | 🔄 进行中（✅ R6 展示修复已重部署 2026-07-20 `4d81d5f`，version→0.3.0/test 92/92，待 Owner 复验→关闭） |
 
 ## 当前 Change Notes
 

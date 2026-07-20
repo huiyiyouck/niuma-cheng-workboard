@@ -14,6 +14,14 @@
 - 下一步入口：Owner 从真实网络验收 `https://115.191.43.79` + 域名；通过 → 迭代关闭检查。回滚预案见 `v0.3.md` 部署就绪检查表。
 - 收尾状态：已收尾
 
+### 2026-07-20 追加（其二）— R6 展示修复重部署
+- Owner 要求把 v0.3 R6 修复重部署生产。R6 = Developer 收 Owner 展示反馈 + 待办：看板卡截断防撑爆、`package.json` version bump `0.3.0`、测试 fixture 化（92/92）、agent-workflow 卡片深度详情后端。
+- **纯代码重部署、无 DB 迁移**（R6 无 `migrations/` 变更、`002` 早已应用、前端依赖未变）——比初次部署轻，回滚仅代码。
+- 动作：代码 tar 备份（`/opt/workboard-prod/backup/v0.3-r6-20260720-142900`）→ `git pull b01fe25→4d81d5f` → `npm run build`（`index-CWzt_Zlc.js`）→ `cp -a src/server/.`+`package.json`+前端 dist → restart。`.env`/config 未碰。
+- 验证：health **`version:0.3.0`**（收掉 version 遗留）+ `migrations:ok`（无新迁移）；`/api/sessions` 200 无回归；agent-workflow 深度详情 snapshot 命中 `baseline/roadmap/templates/positioning/workflowDetail`。
+- 教训：验证脚本勿把 health 轮询 `curl` 放 `set -e` 下——重启窗口内 curl exit 7 会掐脚本（文件已部署无害，但验证需重跑）。
+- 下一步：Owner 复验 R6 展示修复 → 通过则执行迭代关闭检查关闭 v0.3（技术层已判可关闭）。收尾状态：已收尾。
+
 ### 2026-07-20 追加 — 验收 + 迭代关闭检查
 - Owner 生产验收**通过**（「验证完成，可以跑了」+「可以访问」，真实网络可达确认、消除公司网络 80/443 拦截风险）。
 - DevOps 顺手执行**迭代关闭检查**（机制 §3）：技术层 9 项全过（阶段状态一致 / 各产出物有结论 / 无阻塞 / #8 废弃 `/api/mappings`+`session_mappings` 前端零引用 / #9 无元信息变更）→ 判「技术可关闭」。
