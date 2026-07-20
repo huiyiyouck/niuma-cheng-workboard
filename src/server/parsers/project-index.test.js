@@ -44,16 +44,14 @@ test("isTodoDone：完成标记命中，未完成不误判", () => {
   assert.equal(isTodoDone(""), false);
 });
 
-test("解析真实本项目 INDEX.md：当前状态 + 未完成待办", async () => {
+test("解析真实本项目 INDEX.md：结构冒烟（不耦合演进数据）", async () => {
   const md = await readFile(REAL_INDEX, "utf8");
   const result = parseProjectIndex(md, { sourcePath: REAL_INDEX });
-  // 注：本用例读取真实 INDEX.md（随迭代推进而变化），断言需跟随当前实际状态同步更新
-  assert.equal(result.iteration, "v0.2");
+  // 真实 INDEX 随迭代持续演进，只断言结构不变量；精确解析行为由本文件内联 fixture 用例覆盖
+  assert.match(result.iteration ?? "", /^v\d+/);
   assert.equal(result.mode, "标准迭代");
-  assert.equal(result.blocked, null); // INDEX 当前「阻塞项：无」→ null（H-1~H-3 已修正、v0.2 已部署）
   assert.ok(result.phase && result.phase.length > 0);
-  // 跨任务待办：2 条 v0.3 方向（会话迭代标签、菜单精简 5→3），均归属 PM 待研究
-  assert.equal(result.todos.length, 2);
+  assert.ok(Array.isArray(result.todos));
 });
 
 test("完成态待办被剔除", () => {
